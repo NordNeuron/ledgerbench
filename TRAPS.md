@@ -411,7 +411,17 @@ state; detector events at smoke-failed tasks are excluded from H1; the
 H1 snapshot chain compares consecutive smoke-passed states, so failures
 persisting after recovery count as genuine. Zero discretion.
 
-## PRE-REGISTRATION (FROZEN — see hash below)
+## FREEZE RECORD
+
+- **Status: FROZEN, 2026-07-03.**
+- Git tag: `phase1-freeze-v1` (commit `257dc61`).
+- Sequence SHA256 (all files under `tasks/taskcli/` + `oracles/taskcli/`,
+  sorted paths + contents, 83 files):
+  `6a5eb9fbe7af1d4ee624a4a341f895e9f10cc46590106e4dec1ec4d4ee879690`
+- After this point, task text, assertions, oracles, and analysis rules
+  change for no reason whatsoever.
+
+## PRE-REGISTRATION (FROZEN — commit 257dc61, tag phase1-freeze-v1, 2026-07-03)
 
 Design: 5 arms (A summary-baseline; B append-only ledger; C evidence-
 governed ledger; C+ = C + telemetry docket; D = C + generator-initiated
