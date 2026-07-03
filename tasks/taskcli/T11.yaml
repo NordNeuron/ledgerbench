@@ -1,0 +1,23 @@
+id: T11
+session: 4
+type: additive
+title: Exit code contract
+prompt: |
+  Establish a permanent exit-code contract for every command, current and
+  future:
+
+  - exit 0: success.
+  - exit 2: validation error — the user supplied bad input (invalid date,
+    unknown priority value, an id that does not exist or is not a number,
+    an unrecognized flag value).
+  - exit 1: environment/I-O error — the operation itself failed (for
+    example, a backup destination whose directory does not exist or is not
+    writable).
+
+  Error messages always go to stderr, never stdout. Apply the contract to
+  all existing commands now.
+requirement_id: R11
+assertions:
+  - assertions/T11_assert.py
+  - assertions/T11_msgformat_assert.py
+new_requirement_text: "Exit-code contract, permanent and global: 0 success, 2 validation error (bad user input), 1 environment/I-O error. Error messages always on stderr."

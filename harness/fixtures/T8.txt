@@ -1,0 +1,260 @@
+<file path="taskcli/storage.py">
+"""SQLite storage for taskcli. Tasks live in tasks.db (table `tasks`) in
+the current working directory. tasks.json is no longer written or read.
+"""
+import sqlite3
+
+DB_FILE = "tasks.db"
+
+
+def get_connection(path=DB_FILE):
+    conn = sqlite3.connect(path)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS tasks (
+            id INTEGER PRIMARY KEY,
+            title TEXT NOT NULL,
+            done INTEGER NOT NULL DEFAULT 0,
+            priority TEXT NOT NULL DEFAULT 'med',
+            due TEXT,
+            archived INTEGER NOT NULL DEFAULT 0
+        )
+    """)
+    cols = {row[1] for row in conn.execute("PRAGMA table_info(tasks)")}
+    if "archived" not in cols:
+        conn.execute("ALTER TABLE tasks ADD COLUMN archived INTEGER NOT NULL DEFAULT 0")
+    conn.commit()
+    return conn
+
+
+def load_tasks(path=DB_FILE):
+    conn = get_connection(path)
+    try:
+        rows = conn.execute(
+            "SELECT id, title, done, priority, due, archived FROM tasks ORDER BY id"
+        ).fetchall()
+    finally:
+        conn.close()
+    tasks = []
+    for id_, title, done, priority, due, archived in rows:
+        task = {
+            "id": id_,
+            "title": title,
+            "done": bool(done),
+            "priority": priority,
+            "archived": bool(archived),
+        }
+        if due:
+            task["due"] = due
+        tasks.append(task)
+    return tasks
+
+
+def save_tasks(tasks, path=DB_FILE):
+    conn = get_connection(path)
+    try:
+        conn.execute("DELETE FROM tasks")
+        for t in tasks:
+            conn.execute(
+                "INSERT INTO tasks (id, title, done, priority, due, archived) "
+                "VALUES (?, ?, ?, ?, ?, ?)",
+                (
+                    t["id"],
+                    t["title"],
+                    int(t.get("done", False)),
+                    t.get("priority", "med"),
+                    t.get("due"),
+                    int(t.get("archived", False)),
+                ),
+            )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def next_id(tasks):
+    if not tasks:
+        return 1
+    return max(t["id"] for t in tasks) + 1
+</file>
+<file path="taskcli/cli.py">
+import argparse
+import datetime
+import os
+import sys
+
+from . import storage
+
+PRIORITY_ORDER = {"high": 0, "med": 1, "low": 2}
+
+
+def valid_date(value):
+    try:
+        datetime.date.fromisoformat(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"invalid date: {value!r} (expected YYYY-MM-DD)")
+    return value
+
+
+def get_today():
+    env_today = os.environ.get("TASKCLI_TODAY")
+    if env_today:
+        return datetime.date.fromisoformat(env_today)
+    return datetime.date.today()
+
+
+def format_task(t):
+    status = "x" if t.get("done") else " "
+    parts = [f"[{status}] {t['id']}: {t['title']}"]
+    if "priority" in t:
+        parts.append(f"(priority: {t['priority']})")
+    if t.get("due"):
+        parts.append(f"(due: {t['due']})")
+    if t.get("archived"):
+        parts.append("(archived)")
+    return " ".join(parts)
+
+
+def cmd_add(args):
+    tasks = storage.load_tasks()
+    task = {
+        "id": storage.next_id(tasks),
+        "title": args.title,
+        "done": False,
+        "priority": args.priority,
+        "due": args.due,
+    }
+    tasks.append(task)
+    storage.save_tasks(tasks)
+    print(f"Added task {task['id']}: {task['title']}")
+
+
+def cmd_list(args):
+    tasks = storage.load_tasks()
+    if not getattr(args, "all", False):
+        tasks = [t for t in tasks if not t.get("archived")]
+    if getattr(args, "overdue", False):
+        today = get_today()
+        tasks = [
+            t for t in tasks
+            if t.get("due") and not t.get("done")
+            and datetime.date.fromisoformat(t["due"]) < today
+        ]
+    if getattr(args, "sort", None) == "priority":
+        tasks = sorted(tasks, key=lambda t: PRIORITY_ORDER.get(t.get("priority", "med"), 1))
+    if not tasks:
+        print("No tasks.")
+        return
+    for t in tasks:
+        print(format_task(t))
+
+
+def cmd_done(args):
+    tasks = storage.load_tasks()
+    for t in tasks:
+        if t["id"] == args.id:
+            t["done"] = True
+            storage.save_tasks(tasks)
+            print(f"Marked task {args.id} done.")
+            return
+    print(f"No task with id {args.id}", file=sys.stderr)
+    sys.exit(1)
+
+
+def cmd_delete(args):
+    tasks = storage.load_tasks()
+    new_tasks = [t for t in tasks if t["id"] != args.id]
+    if len(new_tasks) == len(tasks):
+        print(f"No task with id {args.id}", file=sys.stderr)
+        sys.exit(1)
+    storage.save_tasks(new_tasks)
+    print(f"Deleted task {args.id}.")
+
+
+def cmd_edit(args):
+    tasks = storage.load_tasks()
+    for t in tasks:
+        if t["id"] == args.id:
+            t["title"] = args.title
+            storage.save_tasks(tasks)
+            print(f"Edited task {args.id}.")
+            return
+    print(f"No task with id {args.id}", file=sys.stderr)
+    sys.exit(1)
+
+
+def cmd_stats(args):
+    tasks = storage.load_tasks()
+    total = len(tasks)
+    done = sum(1 for t in tasks if t.get("done"))
+    open_ = total - done
+    by_priority = {"low": 0, "med": 0, "high": 0}
+    for t in tasks:
+        p = t.get("priority", "med")
+        by_priority[p] = by_priority.get(p, 0) + 1
+    print(f"Total: {total}")
+    print(f"Done: {done}")
+    print(f"Open: {open_}")
+    print(f"Priority high: {by_priority.get('high', 0)}")
+    print(f"Priority med: {by_priority.get('med', 0)}")
+    print(f"Priority low: {by_priority.get('low', 0)}")
+
+
+def cmd_archive(args):
+    tasks = storage.load_tasks()
+    changed = False
+    for t in tasks:
+        if t.get("done") and not t.get("archived"):
+            t["archived"] = True
+            changed = True
+    if changed:
+        storage.save_tasks(tasks)
+    print("Archived done tasks.")
+
+
+def build_parser():
+    parser = argparse.ArgumentParser(prog="taskcli")
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    p_add = sub.add_parser("add", help="Add a new task")
+    p_add.add_argument("title")
+    p_add.add_argument("--priority", choices=["low", "med", "high"], default="med")
+    p_add.add_argument("--due", type=valid_date, default=None)
+    p_add.set_defaults(func=cmd_add)
+
+    p_list = sub.add_parser("list", help="List tasks")
+    p_list.add_argument("--sort", choices=["priority"], default=None)
+    p_list.add_argument("--overdue", action="store_true")
+    p_list.add_argument("--all", action="store_true")
+    p_list.set_defaults(func=cmd_list)
+
+    p_done = sub.add_parser("done", help="Mark a task done")
+    p_done.add_argument("id", type=int)
+    p_done.set_defaults(func=cmd_done)
+
+    p_delete = sub.add_parser("delete", help="Delete a task")
+    p_delete.add_argument("id", type=int)
+    p_delete.set_defaults(func=cmd_delete)
+
+    p_edit = sub.add_parser("edit", help="Edit a task's title")
+    p_edit.add_argument("id", type=int)
+    p_edit.add_argument("--title", required=True)
+    p_edit.set_defaults(func=cmd_edit)
+
+    p_stats = sub.add_parser("stats", help="Show task statistics")
+    p_stats.set_defaults(func=cmd_stats)
+
+    p_archive = sub.add_parser("archive", help="Archive done tasks")
+    p_archive.set_defaults(func=cmd_archive)
+
+    return parser
+
+
+def main(argv=None):
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    args.func(args)
+
+
+if __name__ == "__main__":
+    main()
+</file>

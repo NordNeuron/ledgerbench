@@ -1,0 +1,16 @@
+id: T12
+session: 4
+type: additive
+title: Color output with pipe safety
+prompt: |
+  Add a `--color` option to `list`: when given, overdue tasks are shown in
+  red and completed tasks in green, using ANSI escape codes.
+
+  Permanent output-safety rule that comes with it: when stdout is not a
+  TTY (output is piped or redirected), no command may ever emit ANSI
+  escape sequences — not even when `--color` (or any future color
+  feature) is requested. Piped output must always be plain text.
+requirement_id: R12
+assertions:
+  - assertions/T12_assert.py
+new_requirement_text: "`list --color` shows overdue in red and done in green via ANSI codes. Pipe-safety, permanent: when stdout is not a TTY, no command ever emits ANSI escape sequences, regardless of flags or future color features."

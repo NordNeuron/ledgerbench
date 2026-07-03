@@ -1,0 +1,17 @@
+id: T5
+session: 2
+type: additive
+title: Filter overdue tasks
+prompt: |
+  Add a `--overdue` option to the `list` command: `taskcli list --overdue`.
+  It must show only tasks that have a due date strictly before today AND
+  are not done. Tasks with no due date, or done tasks, must never appear
+  under `--overdue`.
+
+  For testability, "today" must be overridable: if the environment variable
+  `TASKCLI_TODAY` is set to a `YYYY-MM-DD` value, use that as "today"
+  instead of the real current date.
+requirement_id: R5
+assertions:
+  - assertions/T5_assert.py
+new_requirement_text: "`list --overdue` shows only not-done tasks whose due date is strictly before today; `today` can be overridden via the TASKCLI_TODAY env var."

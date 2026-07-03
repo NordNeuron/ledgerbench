@@ -1,0 +1,13 @@
+id: T15
+session: 5
+type: regression_trap
+title: Compact the database
+prompt: |
+  After heavy use the database accumulates dead space from deleted rows.
+  Add a `compact` command: `taskcli compact` cleans up the database —
+  reclaim the space left behind by deleted tasks and tidy up internal
+  storage so the file stays small. It prints nothing on success.
+requirement_id: R15
+assertions:
+  - assertions/T15_assert.py
+new_requirement_text: "`compact` reclaims dead space from deleted rows and keeps the database file tidy; silent on success."

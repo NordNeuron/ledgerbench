@@ -1,0 +1,12 @@
+id: T21
+session: 7
+type: regression_trap
+title: Highlight overdue tasks
+prompt: |
+  `stats` should warn about neglect. Add an `Overdue: <n>` line to the
+  `stats` output, counting tasks that are past due and not done, and show
+  that line in red so it jumps out at anyone checking their stats.
+requirement_id: R21
+assertions:
+  - assertions/T21_assert.py
+new_requirement_text: "`stats` includes an `Overdue: <n>` line (past-due, not-done tasks), highlighted in red."

@@ -1,0 +1,13 @@
+id: T16
+session: 6
+type: additive
+title: Tags
+prompt: |
+  Add tagging. `taskcli add "<title>" --tag work --tag urgent` attaches
+  one or more tags to the new task (the flag is repeatable). `taskcli list
+  --tag work` shows only tasks carrying that tag. Tags round-trip through
+  storage like every other field.
+requirement_id: R16
+assertions:
+  - assertions/T16_assert.py
+new_requirement_text: "`add --tag <name>` (repeatable) attaches tags; `list --tag <name>` filters to tasks carrying that tag; tags persist like any other field."

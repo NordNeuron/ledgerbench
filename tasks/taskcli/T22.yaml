@@ -1,0 +1,12 @@
+id: T22
+session: 8
+type: additive
+title: Search
+prompt: |
+  Add a `search` command: `taskcli search <text>` prints every task whose
+  title contains `<text>`, case-insensitively. Matches print in the same
+  format `list` uses.
+requirement_id: R22
+assertions:
+  - assertions/T22_assert.py
+new_requirement_text: "`search <text>` prints tasks whose titles contain the text, case-insensitively, in the list format."

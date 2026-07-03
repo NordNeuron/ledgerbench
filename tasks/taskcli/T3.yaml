@@ -1,0 +1,11 @@
+id: T3
+session: 1
+type: regression_trap
+title: Add an edit command
+prompt: |
+  Add an `edit` command: `taskcli edit <id> --title "new title"`.
+  It must change only the title of the given task.
+requirement_id: R3
+assertions:
+  - assertions/T3_assert.py
+new_requirement_text: "edit changes only the title; all other stored fields are preserved."

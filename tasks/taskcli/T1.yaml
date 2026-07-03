@@ -1,0 +1,18 @@
+id: T1
+session: 1
+type: additive
+title: Add task priority
+prompt: |
+  Add a `--priority low|med|high` option to the `add` command:
+  `taskcli add "<title>" --priority high`. If `--priority` is omitted, the
+  task defaults to priority `med`.
+
+  The `list` command must show each task's priority in its output line, for
+  example by appending `(priority: high)` after the title.
+
+  Store the priority on the task record so it round-trips through the
+  storage layer along with `id`, `title`, and `done`.
+requirement_id: R1
+assertions:
+  - assertions/T1_assert.py
+new_requirement_text: "Every task has a priority (low|med|high, default med), set via `add --priority`, and it is persisted with the task record."

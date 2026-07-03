@@ -1,0 +1,23 @@
+id: T10
+session: 4
+type: additive
+title: Backup command with atomic file writes
+prompt: |
+  Add a `backup` command: `taskcli backup <path>` writes a complete copy of
+  the current task database to `<path>`.
+
+  Alongside it, a permanent policy for every command that writes a file
+  OUTPUT — a file the user asked for at a path they supplied, like this
+  backup and any future export-style command: the write must be atomic.
+  Write the full contents to `<path>.tmp` (in the same directory), then
+  rename it onto `<path>`. If anything fails mid-write, the previous
+  contents of `<path>` must be left exactly as they were, and no partial
+  or temporary output may remain at `<path>`.
+
+  This policy is about user-facing output files only. The live task
+  database (`tasks.db`) is not in scope — keep using it directly.
+requirement_id: R10
+assertions:
+  - assertions/T10_assert.py
+  - assertions/T10_atomic_assert.py
+new_requirement_text: "`backup <path>` writes a full database copy. Atomic-write policy, permanent, for user-facing file OUTPUTS (backup and future export-style commands): write to `<path>.tmp` then rename onto `<path>`; on failure the prior contents of `<path>` are untouched. The live tasks.db is out of scope."

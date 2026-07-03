@@ -1,0 +1,12 @@
+id: T17
+session: 6
+type: regression_trap
+title: Smart list view
+prompt: |
+  Make `list` more useful for reviewing your day: overdue tasks first,
+  then everything else ordered by priority (high, then med, then low).
+  Reviewing what matters most should be effortless.
+requirement_id: R17
+assertions:
+  - assertions/T17_assert.py
+new_requirement_text: "list offers a review view: overdue tasks first, then by priority high to low."

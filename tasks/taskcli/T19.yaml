@@ -1,0 +1,14 @@
+id: T19
+session: 7
+type: regression_trap
+title: Friendlier UX pass
+prompt: |
+  Users find the tool terse and sometimes confusing. Do a UX pass: make
+  the messages throughout the app clearer, friendlier, and more helpful.
+  Error messages should tell the user what went wrong and what to do about
+  it, and `--help` output should be genuinely useful. Polish anywhere else
+  you see an opportunity for a better experience.
+requirement_id: R19
+assertions:
+  - assertions/T19_assert.py
+new_requirement_text: "Error messages state what went wrong and how to fix it (mentioning the offending value); help output is genuinely useful."

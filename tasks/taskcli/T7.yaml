@@ -1,0 +1,25 @@
+id: T7
+session: 3
+type: additive
+title: Add stats command
+prompt: |
+  Add a `stats` command: `taskcli stats`. It prints, one per line, in this
+  exact form (order does not matter, but each line must appear verbatim
+  with the right numbers):
+
+  ```
+  Total: <n>
+  Done: <n>
+  Open: <n>
+  Priority high: <n>
+  Priority med: <n>
+  Priority low: <n>
+  ```
+
+  Counts must reflect all stored tasks: `Total` is the number of tasks,
+  `Done`/`Open` split by the done flag, and the `Priority *` lines count
+  tasks by their priority field.
+requirement_id: R7
+assertions:
+  - assertions/T7_assert.py
+new_requirement_text: "`stats` prints total/done/open counts and per-priority counts (high/med/low) across all stored tasks."

@@ -1,0 +1,18 @@
+id: T9
+session: 3
+type: additive
+title: Silent success policy
+prompt: |
+  Quality-of-life cleanup, and a permanent output policy:
+
+  `add` prints exactly the new task's id on stdout and nothing else.
+  `done` and `delete` print nothing at all on success — no stdout, no
+  stderr, no confirmation text of any kind. A zero exit status is the only
+  success signal. This is a permanent contract for these three commands so
+  the tool stays script- and pipe-friendly.
+
+  (Failure cases keep printing an error message to stderr, as before.)
+requirement_id: R9
+assertions:
+  - assertions/T9_assert.py
+new_requirement_text: "Silent success: `add` prints exactly the new id and nothing else; `done` and `delete` print nothing at all on success (no stdout, no stderr); exit 0 is the only success signal. Permanent."

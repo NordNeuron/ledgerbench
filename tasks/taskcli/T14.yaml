@@ -1,0 +1,21 @@
+id: T14
+session: 5
+type: regime_change
+title: Normalize the database schema
+prompt: |
+  We are normalizing the database schema in preparation for multi-type
+  records: the `tasks` table is renamed to `items`, and gains a new TEXT
+  column `kind` whose value is always 'task' for now. After this change
+  the old `tasks` table must not exist in the database at all.
+
+  The database file stays `tasks.db`. Nothing about CLI behavior changes —
+  every command keeps working exactly as before.
+
+  Implementation guidance: create the `items` table on startup if it does
+  not exist; if an old `tasks` table is present, migrate its rows into
+  `items` once and drop it. Only the storage layer should need to change.
+requirement_id: R14
+evidence: evidence/E2_regime_schema.md
+assertions:
+  - assertions/T14_assert.py
+new_requirement_text: "All records live in an `items` table (with a `kind` column, 'task' for tasks) in tasks.db; the old `tasks` table must no longer exist. CLI behavior is unchanged."

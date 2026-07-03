@@ -1,0 +1,14 @@
+id: T23
+session: 8
+type: regression_trap
+title: Unify list and export query paths
+prompt: |
+  Refactor: `list` and `export` have drifted apart internally — they each
+  assemble their own view of the tasks, and filters or fields added to one
+  keep missing the other. Unify them on a single shared query path so that
+  current and future filtering behaves consistently in both. Behavior you
+  do not have an explicit reason to change should not change.
+requirement_id: R23
+assertions:
+  - assertions/T23_assert.py
+new_requirement_text: "`list` and `export` share one internal query path; their observable behavior is unchanged by the refactor."

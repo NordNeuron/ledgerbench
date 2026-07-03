@@ -1,0 +1,12 @@
+id: T18
+session: 6
+type: additive
+title: CSV export
+prompt: |
+  `export` gains a format option: `taskcli export <path> --format csv`
+  writes the tasks as CSV — a header row naming the fields, then one row
+  per task. Without `--format`, export keeps its current behavior.
+requirement_id: R18
+assertions:
+  - assertions/T18_assert.py
+new_requirement_text: "`export <path> --format csv` writes CSV with a header row and one row per task; plain `export` keeps its existing format."

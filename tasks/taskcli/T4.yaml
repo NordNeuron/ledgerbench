@@ -1,0 +1,21 @@
+id: T4
+session: 2
+type: additive
+title: Add due dates
+prompt: |
+  Add a `--due YYYY-MM-DD` option to the `add` command:
+  `taskcli add "<title>" --due 2026-03-05`. The due date must be validated:
+  if the value is not a valid `YYYY-MM-DD` date, the command must exit with
+  a non-zero status and print an error message (to stderr is fine).
+
+  Store the due date on the task record so it round-trips through the
+  storage layer. Tasks without a due date simply have none set.
+
+  Display policy, permanent: anywhere a due date appears in the output of
+  any command — current or future — it is rendered as `YYYY-MM-DD`,
+  exactly. No other date rendering is ever used.
+requirement_id: R4
+assertions:
+  - assertions/T4_assert.py
+  - assertions/T4_iso_assert.py
+new_requirement_text: "`add --due YYYY-MM-DD` stores a validated due date; invalid dates are rejected with a non-zero exit status. Due dates are always displayed as YYYY-MM-DD, in every command, forever."

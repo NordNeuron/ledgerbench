@@ -1,0 +1,22 @@
+id: T20
+session: 7
+type: regime_change
+title: Configuration file
+prompt: |
+  Configuration modernization: taskcli now reads an optional `config.toml`
+  from the current working directory. Recognized keys:
+
+  - `today` — a YYYY-MM-DD date that overrides the current date (used for
+    testing time-dependent behavior; this replaces the TASKCLI_TODAY
+    mechanism as the supported way to pin the date).
+  - `default_priority` — one of low, med, high; used by `add` when no
+    `--priority` flag is given (instead of the built-in default).
+
+  If `config.toml` is absent, behavior is unchanged. If both config.toml's
+  `today` and the old TASKCLI_TODAY environment variable are present, the
+  config file wins. The TASKCLI_TODAY environment variable is deprecated.
+requirement_id: R20
+evidence: evidence/E3_regime_config.md
+assertions:
+  - assertions/T20_assert.py
+new_requirement_text: "An optional config.toml (keys: today, default_priority) configures taskcli; config.toml takes precedence over the deprecated TASKCLI_TODAY environment variable."

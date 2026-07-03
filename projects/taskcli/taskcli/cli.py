@@ -1,0 +1,80 @@
+import argparse
+import sys
+
+from . import storage
+
+
+def cmd_add(args):
+    tasks = storage.load_tasks()
+    task = {
+        "id": storage.next_id(tasks),
+        "title": args.title,
+        "done": False,
+    }
+    tasks.append(task)
+    storage.save_tasks(tasks)
+    print(f"Added task {task['id']}: {task['title']}")
+
+
+def cmd_list(args):
+    tasks = storage.load_tasks()
+    if not tasks:
+        print("No tasks.")
+        return
+    for t in tasks:
+        status = "x" if t["done"] else " "
+        print(f"[{status}] {t['id']}: {t['title']}")
+
+
+def cmd_done(args):
+    tasks = storage.load_tasks()
+    for t in tasks:
+        if t["id"] == args.id:
+            t["done"] = True
+            storage.save_tasks(tasks)
+            print(f"Marked task {args.id} done.")
+            return
+    print(f"No task with id {args.id}", file=sys.stderr)
+    sys.exit(1)
+
+
+def cmd_delete(args):
+    tasks = storage.load_tasks()
+    new_tasks = [t for t in tasks if t["id"] != args.id]
+    if len(new_tasks) == len(tasks):
+        print(f"No task with id {args.id}", file=sys.stderr)
+        sys.exit(1)
+    storage.save_tasks(new_tasks)
+    print(f"Deleted task {args.id}.")
+
+
+def build_parser():
+    parser = argparse.ArgumentParser(prog="taskcli")
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    p_add = sub.add_parser("add", help="Add a new task")
+    p_add.add_argument("title")
+    p_add.set_defaults(func=cmd_add)
+
+    p_list = sub.add_parser("list", help="List tasks")
+    p_list.set_defaults(func=cmd_list)
+
+    p_done = sub.add_parser("done", help="Mark a task done")
+    p_done.add_argument("id", type=int)
+    p_done.set_defaults(func=cmd_done)
+
+    p_delete = sub.add_parser("delete", help="Delete a task")
+    p_delete.add_argument("id", type=int)
+    p_delete.set_defaults(func=cmd_delete)
+
+    return parser
+
+
+def main(argv=None):
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    args.func(args)
+
+
+if __name__ == "__main__":
+    main()

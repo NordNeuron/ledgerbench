@@ -1,0 +1,14 @@
+id: T6
+session: 2
+type: regime_change
+title: Migrate storage to SQLite
+prompt: |
+  We are migrating storage: all data must now live in a SQLite database
+  `tasks.db` (single table `tasks`). `tasks.json` must no longer be written
+  or read. Migrate any existing behavior; all commands keep identical CLI
+  behavior.
+requirement_id: R6
+evidence: evidence/E1_regime_sqlite.md
+assertions:
+  - assertions/T6_assert.py
+new_requirement_text: "All task data lives in a SQLite database tasks.db (single table `tasks`); tasks.json must never be written or read again; all existing CLI behavior is preserved."

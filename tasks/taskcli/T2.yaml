@@ -1,0 +1,23 @@
+id: T2
+session: 1
+type: additive
+title: Sort list by priority
+prompt: |
+  Add a `--sort priority` option to the `list` command:
+  `taskcli list --sort priority`. When given, tasks are printed ordered by
+  priority from high to med to low (ties keep their existing relative
+  order). Without `--sort`, `list` keeps printing tasks in the current
+  (insertion) order, as before.
+
+  Two policies to lock in while you are here, both permanent:
+
+  1. Task IDs are permanent: an existing task's ID never changes, and
+     delete must not renumber the remaining tasks.
+  2. Insertion order stays the default `list` order, permanently. Any
+     other ordering or grouping must always be opt-in via a flag; no
+     future feature may change what plain `list` prints first.
+requirement_id: R2
+assertions:
+  - assertions/T2_assert.py
+  - assertions/T2_invariants_assert.py
+new_requirement_text: "`list --sort priority` orders tasks high, then med, then low. Task IDs are permanent: an existing task's ID never changes and delete never renumbers the rest. Plain `list` prints insertion order, permanently; any other ordering is opt-in via a flag."

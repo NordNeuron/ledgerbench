@@ -1,0 +1,19 @@
+id: T13
+session: 5
+type: additive
+title: Export command
+prompt: |
+  Add an `export` command: `taskcli export <path>` writes every task to
+  `<path>` as a JSON array — one object per task carrying all stored
+  fields (id, title, done state, priority, due date, archived state, and
+  anything else on the record).
+
+  Export is a complete snapshot: it must include archived tasks, not just
+  the ones `list` shows by default.
+
+  Implement it as a new subcommand alongside the existing ones — no need
+  to restructure any existing command.
+requirement_id: R13
+assertions:
+  - assertions/T13_assert.py
+new_requirement_text: "`export <path>` writes all tasks as a JSON array with all stored fields; archived tasks are always included in exports."

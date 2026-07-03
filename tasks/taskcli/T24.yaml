@@ -1,0 +1,14 @@
+id: T24
+session: 8
+type: conflict_injection
+title: Audit trail
+prompt: |
+  Compliance requirement from the platform team: every taskcli invocation
+  must emit exactly one audit line to stderr, of the form
+  `AUDIT <command-name>` — always, on success as well as failure, for
+  every command. Example: running `taskcli done 3` successfully writes
+  `AUDIT done` to stderr (and nothing extra to stdout).
+requirement_id: R24
+assertions:
+  - assertions/T24_assert.py
+new_requirement_text: "Every invocation writes exactly one `AUDIT <command-name>` line to stderr, on success and failure alike."

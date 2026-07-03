@@ -1,0 +1,18 @@
+id: T8
+session: 3
+type: regression_trap
+title: Add archive command
+prompt: |
+  Add an `archive` command: `taskcli archive`. It moves every currently
+  done task into an "archived" state. Archived tasks:
+  - are excluded from the default `taskcli list` output,
+  - are still shown when `taskcli list --all` is used,
+  - still count as `Done` (not `Open`) in `taskcli stats`, and still count
+    toward their priority line in `taskcli stats`.
+
+  Archiving must not change a task's title, priority, due date, or done
+  flag — it only marks the task as archived.
+requirement_id: R8
+assertions:
+  - assertions/T8_assert.py
+new_requirement_text: "`archive` marks done tasks archived; archived tasks are hidden from plain `list` but shown with `list --all`, and still count normally in `stats`."
