@@ -558,12 +558,30 @@ def separation_check(run_dir: Path) -> int:
                 hits += 1
                 print(f"SEPARATION VIOLATION: {banned!r} in generator prompt "
                       f"(task={r.get('task_id')}, iter={r.get('iteration')})")
+        # Superseded-content scan is scoped to what the governance layer
+        # controls: the system prompt (rebuilt every iteration from the
+        # ACTIVE ledger) and the newest user message. In-session
+        # conversation HISTORY is immutable by construction — content that
+        # entered legitimately pre-supersession (e.g. a failing test name
+        # in a T19 repair message, superseded at T20, still visible at
+        # T21) is history, not guidance, and cannot be retracted by any
+        # implementation. (Check-definition correction, logged in
+        # TRAPS.md; the unscoped version was unsatisfiable for any
+        # mid-session supersession.)
+        try:
+            parsed = json.loads(prompt)
+            fresh = parsed.get("system", "")
+            user_msgs = [m for m in parsed.get("messages", []) if m.get("role") == "user"]
+            if user_msgs:
+                fresh += "\n" + str(user_msgs[-1].get("content", ""))
+        except (json.JSONDecodeError, AttributeError):
+            fresh = prompt
         for assertion_id, chunk, since_ts in superseded_chunks:
-            if r["ts"] > since_ts and chunk in prompt:
+            if r["ts"] > since_ts and chunk in fresh:
                 hits += 1
                 print(f"SEPARATION VIOLATION: superseded {assertion_id} content "
-                      f"{chunk!r} in generator prompt after supersession "
-                      f"(task={r.get('task_id')}, iter={r.get('iteration')})")
+                      f"{chunk!r} in fresh generator prompt content after "
+                      f"supersession (task={r.get('task_id')}, iter={r.get('iteration')})")
     return hits
 
 

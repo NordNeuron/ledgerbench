@@ -421,6 +421,33 @@ persisting after recovery count as genuine. Zero discretion.
 - After this point, task text, assertions, oracles, and analysis rules
   change for no reason whatsoever.
 
+## Step-4 validation record (dry runs, canned solver + canned judge, 2026-07-04)
+
+| Check | B | C | C+ | D |
+|---|---|---|---|---|
+| Verdict shape | T1–T5 P, T6–T24 F (staleness; 72 M4 events) | T1–T18 P, T19–T24 F (plant retained) | T19–T20 F only, **T21–T23 recovered**, T24 F (conflict) | all P except T24 (conflict) |
+| E1@T6 supersedes A1/A3/A4 | n/a | ✓ | ✓ | ✓ |
+| E2@T14 supersedes A6/A10 | n/a | ✓ | ✓ | ✓ |
+| E3@T20 supersedes A5 | n/a | ✓ | ✓ | ✓ |
+| C+ telemetry docket | — | — | ✓ A11f docketed at T20 after failures in [T19, T20], superseded via telemetry-docket | — |
+| D capture channel | — | — | — | ✓ retire_request + capture_event at T19; A11f superseded via generator-lobby; T19 PASS |
+| T24 conflict handling | thrash (F4) | conflict_unresolved A9 vs A24 + escalation | same | same |
+| smoke_probe logged per task | 24/24 | 24/24 | 24/24 | 24/24 |
+| Leak check | 0 hits | 0 hits | 0 hits | 0 hits |
+| Separation check | 0 hits | 0 hits | 0 hits* | 0 hits* |
+
+*Check-definition correction, logged openly: the unscoped superseded-content
+scan flagged conversation HISTORY (test names that entered repair messages
+legitimately pre-supersession, immutable by construction) and was therefore
+unsatisfiable for any mid-session supersession — a situation that could not
+arise before C+/D existed. The scan is now scoped to fresh prompt content
+(system prompt, rebuilt every iteration from the active ledger, plus the
+newest user message). A planted-leak guard confirms the scoped check still
+catches genuine violations (35 hits on superseded content planted into a
+system prompt). The separation INVARIANT is unchanged: the generator is
+never guided by superseded content. This is a validation-guard fix, not an
+H1 analysis rule change; the frozen H1 rules are untouched.
+
 ## PRE-REGISTRATION (FROZEN — commit 257dc61, tag phase1-freeze-v1, 2026-07-03)
 
 Design: 5 arms (A summary-baseline; B append-only ledger; C evidence-

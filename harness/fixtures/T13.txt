@@ -1,0 +1,399 @@
+<file path="taskcli/cli.py">
+"""Golden reference CLI at T23 state: satisfies R1-R23 (not R24, the
+deliberately unsatisfiable audit conflict). Used only to validate that the
+authored assertions/oracles are satisfiable; never shown to any model."""
+import argparse
+import csv as csv_mod
+import datetime
+import json
+import os
+import sys
+
+from taskcli import storage
+
+PRIORITIES = ("low", "med", "high")
+PRIORITY_RANK = {"high": 0, "med": 1, "low": 2}
+
+
+def fail_validation(message):
+    print(f"error: {message}", file=sys.stderr)
+    return 2
+
+
+def fail_io(message):
+    print(f"error: {message}", file=sys.stderr)
+    return 1
+
+
+def load_config():
+    return {}
+
+
+def today():
+    cfg = load_config()
+    value = cfg.get("today")
+    if not value:
+        # Deprecated pre-T20 mechanism, still honored as a fallback.
+        value = os.environ.get("TASKCLI_TODAY")
+    if value:
+        try:
+            return datetime.date.fromisoformat(str(value))
+        except ValueError:
+            pass
+    return datetime.date.today()
+
+
+def valid_date(value):
+    try:
+        datetime.date.fromisoformat(value)
+        return True
+    except ValueError:
+        return False
+
+
+def is_overdue(task, ref):
+    if task["done"] or not task["due"]:
+        return False
+    return datetime.date.fromisoformat(task["due"]) < ref
+
+
+def format_task(task):
+    parts = [f"[{'x' if task['done'] else ' '}] {task['id']}: {task['title']}"]
+    parts.append(f"(priority: {task['priority']})")
+    if task["due"]:
+        parts.append(f"(due: {task['due']})")
+    if task["tags"]:
+        parts.append("(tags: " + ", ".join(task["tags"]) + ")")
+    return " ".join(parts)
+
+
+def print_tasks(tasks, use_color=False):
+    colorize = use_color and sys.stdout.isatty()
+    ref = today()
+    for t in tasks:
+        line = format_task(t)
+        if colorize:
+            if is_overdue(t, ref):
+                line = f"\x1b[31m{line}\x1b[0m"
+            elif t["done"]:
+                line = f"\x1b[32m{line}\x1b[0m"
+        print(line)
+
+
+def resolve_id(raw):
+    """Returns (task, error_exit_code_or_None)."""
+    if not str(raw).lstrip("-").isdigit():
+        return None, fail_validation(f"invalid id '{raw}': not a number")
+    task = storage.get_task(int(raw))
+    if task is None:
+        return None, fail_validation(f"no task with id {raw}")
+    return task, None
+
+
+def cmd_add(args):
+    if args.priority is None:
+        args.priority = str(load_config().get("default_priority", "med"))
+    if args.priority not in PRIORITIES:
+        return fail_validation(
+            f"invalid priority '{args.priority}', expected one of low, med, high")
+    if args.due is not None and not valid_date(args.due):
+        return fail_validation(f"invalid date '{args.due}', expected YYYY-MM-DD")
+    new_id = storage.add_task(args.title, args.priority, args.due, args.tag or [])
+    print(new_id)
+    return 0
+
+
+def cmd_list(args):
+    tasks = storage.load_tasks(include_archived=args.all)
+    ref = today()
+    if args.tag:
+        tasks = [t for t in tasks if args.tag in t["tags"]]
+    if args.overdue:
+        tasks = [t for t in tasks if is_overdue(t, ref)]
+    if args.sort == "priority":
+        tasks = sorted(tasks, key=lambda t: PRIORITY_RANK[t["priority"]])
+    elif args.smart:
+        tasks = sorted(tasks, key=lambda t: (
+            PRIORITY_RANK[t["priority"]], not is_overdue(t, ref)))
+    if not tasks:
+        print("No tasks.")
+        return 0
+    print_tasks(tasks, use_color=args.color)
+    return 0
+
+
+def cmd_done(args):
+    task, err = resolve_id(args.id)
+    if err is not None:
+        return err
+    storage.update_task(task["id"], done=1)
+    return 0
+
+
+def cmd_delete(args):
+    task, err = resolve_id(args.id)
+    if err is not None:
+        return err
+    storage.delete_task(task["id"])
+    return 0
+
+
+def cmd_edit(args):
+    task, err = resolve_id(args.id)
+    if err is not None:
+        return err
+    storage.update_task(task["id"], title=args.title)
+    return 0
+
+
+def cmd_stats(args):
+    tasks = storage.load_tasks(include_archived=True)
+    done = sum(1 for t in tasks if t["done"])
+    ref = today()
+    overdue = sum(1 for t in tasks if is_overdue(t, ref))
+    print(f"Total: {len(tasks)}")
+    print(f"Done: {done}")
+    print(f"Open: {len(tasks) - done}")
+    overdue_line = f"Overdue: {overdue}"
+    if sys.stdout.isatty():
+        overdue_line = f"\x1b[31m{overdue_line}\x1b[0m"
+    print(overdue_line)
+    for p in ("high", "med", "low"):
+        print(f"Priority {p}: {sum(1 for t in tasks if t['priority'] == p)}")
+    return 0
+
+
+def cmd_archive(args):
+    for t in storage.load_tasks(include_archived=False):
+        if t["done"]:
+            storage.update_task(t["id"], archived=1)
+    return 0
+
+
+def cmd_backup(args):
+    try:
+        storage.backup_db(args.path)
+    except OSError as exc:
+        return fail_io(f"cannot write backup to '{args.path}': {exc}")
+    return 0
+
+
+def _query_tasks_for_snapshot():
+    """Unified query path (T23): list uses it with archived excluded via
+    flags; export uses it with everything included (R13)."""
+    return storage.load_tasks(include_archived=True)
+
+
+def cmd_export(args):
+    tasks = _query_tasks_for_snapshot()
+    try:
+        if args.format == "csv":
+            import io
+            buf = io.StringIO()
+            writer = csv_mod.writer(buf, lineterminator="\n")
+            writer.writerow(["id", "title", "done", "priority", "due", "archived", "tags"])
+            for t in tasks:
+                writer.writerow([t["id"], t["title"], t["done"], t["priority"],
+                                 t["due"] or "", t["archived"], ",".join(t["tags"])])
+            storage.atomic_write_bytes(args.path, buf.getvalue().encode("utf-8"))
+        else:
+            payload = json.dumps(tasks, indent=2).encode("utf-8")
+            storage.atomic_write_bytes(args.path, payload)
+    except OSError as exc:
+        return fail_io(f"cannot write export to '{args.path}': {exc}")
+    return 0
+
+
+def cmd_compact(args):
+    storage.compact_db()
+    return 0
+
+
+def cmd_search(args):
+    needle = args.text.lower()
+    tasks = [t for t in storage.load_tasks(include_archived=False)
+             if needle in t["title"].lower()]
+    print_tasks(tasks)
+    return 0
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(prog="taskcli", description="Task manager")
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    p_add = sub.add_parser("add", help="add a task")
+    p_add.add_argument("title")
+    p_add.add_argument("--priority", default=None)
+    p_add.add_argument("--due", default=None)
+    p_add.add_argument("--tag", action="append")
+    p_add.set_defaults(func=cmd_add)
+
+    p_list = sub.add_parser("list", help="list tasks")
+    p_list.add_argument("--sort", choices=["priority"], default=None)
+    p_list.add_argument("--overdue", action="store_true")
+    p_list.add_argument("--color", action="store_true")
+    p_list.add_argument("--all", action="store_true")
+    p_list.add_argument("--smart", action="store_true")
+    p_list.add_argument("--tag", default=None)
+    p_list.set_defaults(func=cmd_list)
+
+    p_done = sub.add_parser("done", help="mark a task done")
+    p_done.add_argument("id")
+    p_done.set_defaults(func=cmd_done)
+
+    p_delete = sub.add_parser("delete", help="delete a task")
+    p_delete.add_argument("id")
+    p_delete.set_defaults(func=cmd_delete)
+
+    p_edit = sub.add_parser("edit", help="edit a task title")
+    p_edit.add_argument("id")
+    p_edit.add_argument("--title", required=True)
+    p_edit.set_defaults(func=cmd_edit)
+
+    p_stats = sub.add_parser("stats", help="show counts")
+    p_stats.set_defaults(func=cmd_stats)
+
+    p_archive = sub.add_parser("archive", help="archive done tasks")
+    p_archive.set_defaults(func=cmd_archive)
+
+    p_backup = sub.add_parser("backup", help="back up the database")
+    p_backup.add_argument("path")
+    p_backup.set_defaults(func=cmd_backup)
+
+    p_export = sub.add_parser("export", help="export all tasks")
+    p_export.add_argument("path")
+    p_export.add_argument("--format", choices=["csv", "json"], default=None)
+    p_export.set_defaults(func=cmd_export)
+
+    p_compact = sub.add_parser("compact", help="compact the database")
+    p_compact.set_defaults(func=cmd_compact)
+
+    p_search = sub.add_parser("search", help="search task titles")
+    p_search.add_argument("text")
+    p_search.set_defaults(func=cmd_search)
+
+    args = parser.parse_args(argv)
+    return args.func(args)
+</file>
+
+<file path="taskcli/storage.py">
+"""Golden reference storage: SQLite, items table (post-T14 schema),
+permanent never-reused ids, atomic file writes."""
+import os
+import sqlite3
+
+DB_NAME = "tasks.db"
+
+COLUMNS = ["id", "title", "done", "priority", "due", "archived", "tags"]
+
+
+def _connect():
+    conn = sqlite3.connect(DB_NAME)
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS tasks ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " title TEXT NOT NULL,"
+        " done INTEGER NOT NULL DEFAULT 0,"
+        " priority TEXT NOT NULL DEFAULT 'med',"
+        " due TEXT,"
+        " archived INTEGER NOT NULL DEFAULT 0,"
+        " tags TEXT NOT NULL DEFAULT '')"
+    )
+    conn.commit()
+    return conn
+
+
+def add_task(title, priority, due, tags):
+    conn = _connect()
+    try:
+        cur = conn.execute(
+            "INSERT INTO tasks (title, done, priority, due, archived, tags)"
+            " VALUES (?, 0, ?, ?, 0, ?)",
+            (title, priority, due, ",".join(tags or [])),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def load_tasks(include_archived=False):
+    conn = _connect()
+    try:
+        where = "" if include_archived else " WHERE archived = 0"
+        rows = conn.execute(
+            f"SELECT {', '.join(COLUMNS)} FROM tasks{where} ORDER BY id"
+        ).fetchall()
+        tasks = []
+        for row in rows:
+            t = dict(zip(COLUMNS, row))
+            t["done"] = bool(t["done"])
+            t["archived"] = bool(t["archived"])
+            t["tags"] = [x for x in (t["tags"] or "").split(",") if x]
+            tasks.append(t)
+        return tasks
+    finally:
+        conn.close()
+
+
+def get_task(task_id):
+    for t in load_tasks(include_archived=True):
+        if t["id"] == task_id:
+            return t
+    return None
+
+
+def update_task(task_id, **fields):
+    conn = _connect()
+    try:
+        sets = ", ".join(f"{k} = ?" for k in fields)
+        values = list(fields.values()) + [task_id]
+        conn.execute(f"UPDATE tasks SET {sets} WHERE id = ?", values)
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def delete_task(task_id):
+    conn = _connect()
+    try:
+        conn.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def compact_db():
+    conn = _connect()
+    try:
+        # Reclaim dead space. sqlite_sequence is preserved so ids are never
+        # renumbered or reused (permanent-ID policy from T2).
+        conn.execute("VACUUM")
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def atomic_write_bytes(path, data):
+    """Atomic-write policy (T10): write <path>.tmp in the same directory,
+    then rename over <path>. Any failure leaves <path> untouched."""
+    tmp = path + ".tmp"
+    with open(tmp, "wb") as f:
+        f.write(data)
+    os.replace(tmp, path)
+
+
+def backup_db(path):
+    if not os.path.exists(DB_NAME):
+        _connect().close()
+    with open(DB_NAME, "rb") as f:
+        data = f.read()
+    atomic_write_bytes(path, data)
+</file>
+
+<file path="taskcli/__main__.py">
+from taskcli.cli import main
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+</file>
