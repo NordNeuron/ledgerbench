@@ -421,6 +421,21 @@ persisting after recovery count as genuine. Zero discretion.
 - After this point, task text, assertions, oracles, and analysis rules
   change for no reason whatsoever.
 
+## MAIN RUNS — launch record (2026-07-04)
+
+- Campaign: 5 arms (A, B, C, C+, D) × 12 seeds = 60 runs,
+  `deepseek-v4-flash`, frozen sequence `phase1-freeze-v1`, concurrency 6,
+  unattended launcher with infrastructure-retry (once, same seed, logged
+  as rerun). Progressive manifest: session scratchpad
+  `main_manifest.json` (run ids, attempts, wall time, return codes);
+  final manifest to be copied here on completion.
+- Cumulative pre-main spend ≈ $0.6 of $4.87; projected main-run cost
+  ≈ $2.90.
+- **No-peeking in force**: no analysis, plots, or summaries until all 60
+  runs complete; monitoring is limited to completion counts and
+  infrastructure failures. analyze.py runs once, against the frozen
+  rules, when the last run ends.
+
 ## Step-4 validation record (dry runs, canned solver + canned judge, 2026-07-04)
 
 | Check | B | C | C+ | D |
