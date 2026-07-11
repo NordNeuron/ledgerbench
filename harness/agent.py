@@ -107,6 +107,11 @@ class RealSolver:
             "input_tokens": response.usage.input_tokens,
             "output_tokens": response.usage.output_tokens,
         }
+        # Full provider usage (cache fields etc.) so accounting matches billing.
+        try:
+            usage["provider_raw"] = response.usage.model_dump()
+        except Exception:
+            pass
         prompt_full = _serialize_prompt(system_prompt, messages)
         self.logger.log_api_call(task_id, iteration, prompt_full, text, usage)
         return text
@@ -124,6 +129,11 @@ class RealSolver:
             "input_tokens": response.usage.input_tokens,
             "output_tokens": response.usage.output_tokens,
         }
+        # Full provider usage (cache fields etc.) so accounting matches billing.
+        try:
+            usage["provider_raw"] = response.usage.model_dump()
+        except Exception:
+            pass
         prompt_full = _serialize_prompt(system_prompt, messages)
         self.logger.log_summary_call(session_boundary_after, prompt_full, text, usage)
         return text

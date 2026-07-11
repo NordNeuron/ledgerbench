@@ -172,6 +172,11 @@ class RealJudge:
             "input_tokens": response.usage.input_tokens,
             "output_tokens": response.usage.output_tokens,
         }
+        # Full provider usage (cache fields etc.) so accounting matches billing.
+        try:
+            usage["provider_raw"] = response.usage.model_dump()
+        except Exception:
+            pass
         return text, usage
 
     def review(self, prompt: str, task_id: str, assertion_id: str, kind: str):
