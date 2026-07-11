@@ -436,6 +436,27 @@ persisting after recovery count as genuine. Zero discretion.
   infrastructure failures. analyze.py runs once, against the frozen
   rules, when the last run ends.
 
+## MAIN RUNS — interruption record (2026-07-11)
+
+- **Campaign halted at 25/60 completed pairs** (A 12/12, B 10/12, C 3/12,
+  C+ 0/12, D 0/12) by **provider balance exhaustion** (DeepSeek HTTP 402
+  "Insufficient Balance") — an infrastructure failure class; the
+  pre-registered rerun rule applies once balance is restored. Two earlier
+  B runs (seeds 5/6) also hit an unhandled 4h-timeout launcher bug (fixed
+  in launcher v3); their reruns were consumed by the same 402 wall.
+- **No-peeking remains in force**: nothing beyond completion counts and
+  usage totals has been read; no analysis of partial data.
+- Honest cost accounting (usage fields only): the main campaign consumed
+  ≈ 9.8M input + 10.0M output tokens across completed and failed
+  attempts. Observed per-run reality: Arm A ≈ 300k tokens, Arm B ≈ 650k —
+  4–10× the $0.06/run planning estimate, which was extrapolated from
+  8-task pilot runs and not re-scaled after the sequence tripled and the
+  ledgered arms' contexts grew. This estimation miss should have been
+  caught from calibration data before launch.
+- Remaining need: 35 runs (B×2, C×9, C+×12, D×12), ≈ 14–18M tokens
+  ≈ $3–5 at standard pricing, roughly half off-peak. Awaiting a top-up
+  decision before any relaunch.
+
 ## Step-4 validation record (dry runs, canned solver + canned judge, 2026-07-04)
 
 | Check | B | C | C+ | D |
