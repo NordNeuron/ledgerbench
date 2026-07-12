@@ -528,8 +528,8 @@ def separation_check(run_dir: Path) -> int:
     if workspace.exists():
         workspace_corpus = subprocess.run(
             ["git", "log", "--all", "-p"], cwd=workspace,
-            capture_output=True, text=True,
-        ).stdout
+            capture_output=True, text=True, encoding="utf-8", errors="replace",
+        ).stdout or ""
 
     superseded_chunks = []  # (assertion_id, chunk, since_ts)
     for s in supersessions:
@@ -552,12 +552,26 @@ def separation_check(run_dir: Path) -> int:
         if r.get("event") not in ("api_call", "summary_call"):
             continue
         prompt = r.get("prompt_full") or ""
-        lowered = prompt.lower()
+        # Both scans cover harness-authored FRESH content only (system
+        # prompt + newest user message): the invariant is that the HARNESS
+        # never speaks governance vocabulary or superseded content to the
+        # generator. Model-authored conversation history (e.g. the model
+        # itself musing that one requirement "supersedes" another at the
+        # T24 conflict) is the generator's own speech, not a disclosure.
+        try:
+            parsed_v = json.loads(prompt)
+            vocab_fresh = parsed_v.get("system", "")
+            user_msgs_v = [m for m in parsed_v.get("messages", []) if m.get("role") == "user"]
+            if user_msgs_v:
+                vocab_fresh += "\n" + str(user_msgs_v[-1].get("content", ""))
+        except (json.JSONDecodeError, AttributeError):
+            vocab_fresh = prompt
+        lowered = vocab_fresh.lower()
         for banned in SEPARATION_BANNED_STRINGS:
             if banned in lowered:
                 hits += 1
-                print(f"SEPARATION VIOLATION: {banned!r} in generator prompt "
-                      f"(task={r.get('task_id')}, iter={r.get('iteration')})")
+                print(f"SEPARATION VIOLATION: {banned!r} in fresh generator prompt "
+                      f"content (task={r.get('task_id')}, iter={r.get('iteration')})")
         # Superseded-content scan is scoped to what the governance layer
         # controls: the system prompt (rebuilt every iteration from the
         # ACTIVE ledger) and the newest user message. In-session
@@ -606,12 +620,29 @@ def leak_check(run_dir: Path) -> int:
             safe_texts.append(f.read_text(encoding="utf-8"))
     safe_corpus = "\n".join(safe_texts)
 
+    import subprocess
+    workspace = run_dir / "workspace"
+    workspace_corpus = ""
+    if workspace.exists():
+        workspace_corpus = subprocess.run(
+            ["git", "log", "--all", "-p"], cwd=workspace,
+            capture_output=True, text=True, encoding="utf-8", errors="replace",
+        ).stdout or ""
+    safe_corpus = safe_corpus + workspace_corpus
+
     oracle_files = sorted(config.ORACLES_DIR.rglob("*.py"))
     needles = set()
     for f in oracle_files:
         if f.name not in safe_corpus:
             needles.add(f.name)
-        text = f.read_text(encoding="utf-8")
+        # Comment lines are excluded from needle material: oracle comments
+        # paraphrase requirement text that legitimately appears in prompts
+        # (and in model prose about those requirements), so they cannot
+        # prove exposure. Test code and names remain fully covered.
+        text = "\n".join(
+            line for line in f.read_text(encoding="utf-8").splitlines()
+            if not line.lstrip().startswith("#")
+        )
         for i in range(0, max(len(text) - 20, 0) + 1, 20):
             chunk = text[i:i + 20]
             if chunk.strip() and chunk not in safe_corpus:

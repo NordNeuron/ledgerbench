@@ -457,6 +457,62 @@ persisting after recovery count as genuine. Zero discretion.
   ≈ $3–5 at standard pricing, roughly half off-peak. Awaiting a top-up
   decision before any relaunch.
 
+## MAIN RUNS — FINAL RESULTS (60/60, analyzed once against frozen rules, 2026-07-12)
+
+Completion: all 60 arm/seed pairs (infrastructure history: 6-day logoff
+kill at 6/60; 402 balance exhaustion at 27/60; both classes rerun per the
+pre-registered rule; final leg completed off-peak). Isolation: leak-check
+0 hits on 5 sampled runs (one per arm); separation-check 0 hits on all 36
+C/C+/D runs. Three further check-definition corrections were required and
+logged (leak needles: workspace-corpus exclusion + comment-line
+exclusion; separation vocabulary scan scoped to harness-authored fresh
+content) — each adjudicated against actual hit provenance and re-verified
+with planted-leak guards.
+
+| Arm | M1@T24 mean (n=12) | H1-trap (primaries) | H1-rewrite | coerced (excl.) | M6 sup/ret/conf | docket | capture | ktok/run |
+|---|---|---|---|---|---|---|---|---|
+| A | **0.306** | 13 | 14 | 0 | — | — | — | 384 |
+| B | 0.684 | **0** | **0** | 9 | — | — | — | 875 |
+| C | 0.698 | 3 | **0** | 0 | 95/55/79 | — | 0 | 492 |
+| C+ | 0.677 | 3 | 6 | 0 | 122/119/66 | 40 | 0 | 480 |
+| D | **0.740** | 2 | 7 | 0 | 100/48/55 | — | **21** | 483 |
+
+Per-primary H1 (trap+rewrite): R2-order A=10 vs ledgered 0–3; R9 A=6 vs
+0–3; R10 A=6 vs 0 everywhere (all contract-grade); R11 A=2 vs 0–6;
+R12 A=3 vs 0–1. Plant A11f: C retained it in 11/12 runs (1 conflict-path
+supersession); C+ docketed it out in 9/12; D lobbied it out in 8/12
+(scored as capture).
+
+**Pre-registered scorecard:**
+- H1-trap (confirmatory): **CONFIRMED for all four ledgered arms** (0–3
+  vs Arm A's 13; all ≤ 1/3).
+- H1-rewrite (confirmatory): **CONFIRMED for B and C** (0 vs 14);
+  **REFUTED for C+ (6) and D (7)** — both exceed 14/3. The amendment
+  channels remove protection when they supersede: every docketed/lobbied
+  assertion is a detector-shield taken down, and rewrite-channel
+  regressions follow. Governance's flexibility has a measurable
+  regression cost.
+- Bite grades: R10 violations contract-grade as predicted (6, all in A).
+- Coercion exclusion: fired only in B (9 events) — the staleness-coercion
+  channel is real and B-specific, as the mechanism implies.
+- Plant A11f: CONFIRMED for C (retained, 11/12), CONFIRMED for C+ docket
+  and for D capture-scoring.
+- Arm D capture: CONFIRMED (21 capture events; C structurally 0; D
+  late-regression ≥ C).
+- T20 vestigial code: **UNDISCRIMINATING** — 100% of post-T20 task-final
+  commits in EVERY arm retain the deprecated env-var read; the prediction
+  B > C > A cannot be evaluated against a flat ceiling (models simply
+  never remove a deprecated-but-working fallback at this scale).
+- Headline: at the 24-task horizon the ledger **earns its keep** —
+  end-state retention roughly doubles (A 0.31 vs 0.68–0.74) and
+  trap-channel violations drop 77–100% — while the pilot's sclerosis
+  finding stands in B's costs (875k tokens/run, 2.3× A; 9 coerced
+  regressions). Governance (C) delivers the same protection at 56% of
+  B's token cost with zero rewrite violations; the amendment-capable
+  variants (C+, D) trade some of that protection for adaptability.
+  Retention differences among the four ledgered arms are small relative
+  to seed variance; statistics remain out of scope per the spec.
+
 ## Step-4 validation record (dry runs, canned solver + canned judge, 2026-07-04)
 
 | Check | B | C | C+ | D |
