@@ -184,6 +184,7 @@ results/     analyze.py output (gitignored)
 
 ## Deeper reading
 
+- **[RELATED_WORK.md](RELATED_WORK.md)** — how LedgerBench relates to learned agentic-memory work (e.g. HAGE), and why retrieval-under-stable-truth and memory-under-changing-truth are different problems.
 - **[BUILD_SPEC.md](BUILD_SPEC.md)** — the full specification this implements.
 - **[FINDINGS.md](FINDINGS.md)** — the Phase-0 pilot write-up.
 - **[DIAGNOSTICS.md](DIAGNOSTICS.md)** — pilot diagnostics and corrections.
