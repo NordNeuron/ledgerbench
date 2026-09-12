@@ -23,3 +23,10 @@ dist/
 .vscode/
 .DS_Store
 Thumbs.db
+
+# LaTeX build artifacts
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.toc
+paper/*.synctex.gz
