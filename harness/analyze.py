@@ -703,17 +703,23 @@ def main():
     # canned correct-by-construction solutions and would distort every
     # metric they appear in (flat M1 at 1.0, zero tokens).
     real_metrics = [m for m in all_metrics if not Path(m["run_dir"]).name.startswith("dryrun_")]
+    plots_written = 0
     if real_metrics:
         plot_cumulative_m1(real_metrics, config.RESULTS_DIR / "cumulative_m1.png")
         plot_m4_counts(real_metrics, config.RESULTS_DIR / "m4_counts.png")
         plot_m4_local_counts(real_metrics, config.RESULTS_DIR / "m4_local_counts.png")
         plot_tokens_per_task(real_metrics, config.RESULTS_DIR / "tokens_per_task.png")
+        plots_written = 4
     dump_supersessions(run_dirs, config.RESULTS_DIR)
     for m in all_metrics:
         if m["m4_local_iterations"]:
             fired = ", ".join(f"{e['task_id']} iter{e['iteration']}" for e in m["m4_local_iterations"])
             print(f"M4-local fired in {m['run_dir']} (arm {m['arm']}): {fired}")
-    print(f"Analyzed {len(run_dirs)} run(s). Wrote {config.RESULTS_DIR}/metrics.csv and 3 plots.")
+    if plots_written:
+        print(f"Analyzed {len(run_dirs)} run(s). Wrote {config.RESULTS_DIR}/metrics.csv and {plots_written} plots.")
+    else:
+        print(f"Analyzed {len(run_dirs)} run(s). Wrote {config.RESULTS_DIR}/metrics.csv "
+              f"(no plots — dry runs only; plots are generated from real runs).")
 
 
 if __name__ == "__main__":
