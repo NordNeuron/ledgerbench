@@ -719,7 +719,7 @@ def main():
         print(f"Analyzed {len(run_dirs)} run(s). Wrote {config.RESULTS_DIR}/metrics.csv and {plots_written} plots.")
     else:
         print(f"Analyzed {len(run_dirs)} run(s). Wrote {config.RESULTS_DIR}/metrics.csv "
-              f"(no plots — dry runs only; plots are generated from real runs).")
+              f"(no plots - dry runs only; plots are generated from real runs).")
 
 
 if __name__ == "__main__":
