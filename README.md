@@ -141,6 +141,20 @@ export LEDGERBENCH_MODEL=deepseek-v4-flash           # or any model id
 export ANTHROPIC_BASE_URL=https://api.deepseek.com/anthropic
 ```
 
+Or run against a **local model** (e.g. Qwen via Ollama/vLLM) through any
+OpenAI-compatible endpoint — no Anthropic/DeepSeek key needed:
+
+```bash
+export LEDGERBENCH_BACKEND=openai
+export OPENAI_BASE_URL=http://localhost:11434/v1     # Ollama; vLLM: :8000/v1
+export OPENAI_API_KEY=not-needed                     # local servers ignore it
+export LEDGERBENCH_MODEL=qwen2.5-coder:32b           # the served model tag
+```
+
+See **[REPRODUCE.md](REPRODUCE.md)** for the full local-Qwen runbook
+(serving the model with a large enough context window, the 60-run campaign
+loop, and committing the results).
+
 Run one arm/seed (real API calls). Choices are `A`, `B`, `C`, `C+`, `D`:
 
 ```bash

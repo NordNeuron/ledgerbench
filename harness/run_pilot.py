@@ -16,6 +16,23 @@ def make_run_id(arm: str, seed: int, dry_run: bool) -> str:
     return f"{prefix}arm{arm_slug}_seed{seed}_{int(time.time())}"
 
 
+def make_solver(logger, dry_run: bool):
+    """Pick the generator backend. --dry-run always uses the canned solver;
+    otherwise config.BACKEND selects the Anthropic Messages API ("anthropic",
+    default) or any OpenAI-compatible endpoint ("openai", e.g. a local Qwen)."""
+    if dry_run:
+        return agent.DryRunSolver(logger)
+    if config.BACKEND == "openai":
+        return agent.OpenAICompatibleSolver(logger)
+    return agent.RealSolver(logger)
+
+
+def run_base_url(dry_run: bool):
+    if dry_run:
+        return None
+    return config.OPENAI_BASE_URL if config.BACKEND == "openai" else config.ANTHROPIC_BASE_URL
+
+
 def run(arm: str, seed: int, dry_run: bool = False):
     run_id = make_run_id(arm, seed, dry_run)
     run_dir = config.RUNS_DIR / run_id
@@ -28,12 +45,13 @@ def run(arm: str, seed: int, dry_run: bool = False):
         # Exact model string, explicit in every run record: the pilot runs a
         # non-spec model (BUILD_SPEC_2 WP3).
         "model": "dry-run-canned-solver" if dry_run else config.MODEL,
-        "base_url": None if dry_run else config.ANTHROPIC_BASE_URL,
+        "backend": "dry-run" if dry_run else config.BACKEND,
+        "base_url": run_base_url(dry_run),
         "temperature": config.TEMPERATURE,
         "max_tokens": config.MAX_TOKENS,
     })
 
-    solver = agent.DryRunSolver(logger) if dry_run else agent.RealSolver(logger)
+    solver = make_solver(logger, dry_run)
     strategy = arms.get_arm(arm, run_dir, logger, dry_run=dry_run)
 
     task_defs = ledger.load_all_task_defs()

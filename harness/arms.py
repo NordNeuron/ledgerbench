@@ -148,8 +148,7 @@ class ArmC(ArmStrategy):
         super().__init__(run_dir, logger)
         self.ledger = ledger.Ledger(run_dir)
         self.seed_readme = (config.SEED_PROJECT_DIR / "README.md").read_text(encoding="utf-8")
-        self.judge = (governance.DryRunJudge(logger) if dry_run
-                      else governance.RealJudge(logger))
+        self.judge = governance.make_judge(logger, dry_run)
 
     def build_system_prompt(self, task_id: str) -> str:
         # Same framing as Arm B (README + locked-in requirements +

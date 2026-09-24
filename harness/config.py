@@ -11,6 +11,25 @@ from pathlib import Path
 # back to the spec's defaults.
 MODEL = os.environ.get("LEDGERBENCH_MODEL", "claude-sonnet-4-6")
 ANTHROPIC_BASE_URL = os.environ.get("ANTHROPIC_BASE_URL")  # None = default Anthropic endpoint
+
+# Model backend. "anthropic" (default) uses the Anthropic Messages API.
+# "openai" uses any OpenAI-compatible /v1/chat/completions endpoint, which
+# is how local servers expose a model — e.g. a local Qwen served through
+# Ollama, vLLM, or LM Studio. Selecting "openai" changes only the transport;
+# the prompts, <file>-block parsing, oracles, and logging are identical, so a
+# run is directly comparable across backends apart from the model itself.
+BACKEND = os.environ.get("LEDGERBENCH_BACKEND", "anthropic").lower()
+
+# OpenAI-compatible endpoint (used only when BACKEND == "openai"). Point
+# OPENAI_BASE_URL at the local server's /v1 root, for example:
+#   http://localhost:11434/v1   (Ollama)
+#   http://localhost:8000/v1    (vLLM / LM Studio / llama.cpp server)
+# and set LEDGERBENCH_MODEL to the served model tag (e.g. "qwen2.5-coder:32b").
+# Local servers usually ignore the API key, but the client requires a
+# non-empty one, so OPENAI_API_KEY falls back to a dummy value at call time.
+OPENAI_BASE_URL = os.environ.get("OPENAI_BASE_URL", "http://localhost:11434/v1")
+OPENAI_API_KEY_ENV_VAR = "OPENAI_API_KEY"
+
 TEMPERATURE = 0.2
 # Spec default 8000; overridable because reasoning models (e.g. DeepSeek)
 # spend part of the output budget on thinking blocks before the file text.
