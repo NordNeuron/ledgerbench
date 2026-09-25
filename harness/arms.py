@@ -4,9 +4,43 @@ ArmStrategy is the extension point: Phase 1's Arm C (governance/amendment/
 judge) should subclass it rather than branching on arm name elsewhere in
 the harness.
 """
+import os
 from pathlib import Path
 
 from harness import config, governance, ledger
+
+
+def seed_readme_text() -> str:
+    """The seed README shown, identically, to every arm's generator prompt.
+
+    The published README documents the CLI commands and the storage format
+    but never lists the project's source files. Because the generator is
+    asked to return COMPLETE files (agent.py) without seeing the workspace,
+    a model that does not know the layout may write a new top-level
+    `taskcli.py`, which `python -m taskcli` never runs (the seeded `taskcli/`
+    package shadows it), so the task fails for a reason unrelated to the
+    memory condition under test.
+
+    When LEDGERBENCH_SHOW_LAYOUT=1, a short project-layout block (derived
+    from the seed package's actual files) is appended so the generator knows
+    which files to edit. It is opt-in and applied identically to every arm,
+    so the default reproduces the published protocol and the arms stay a fair
+    comparison; it exposes only the file NAMES, not their contents, so what
+    the benchmark measures (requirement memory via summary vs. ledger) is
+    unchanged. Report it as a protocol change alongside any numbers.
+    """
+    readme = (config.SEED_PROJECT_DIR / "README.md").read_text(encoding="utf-8")
+    if os.environ.get("LEDGERBENCH_SHOW_LAYOUT") != "1":
+        return readme
+    pkg = config.SEED_PROJECT_DIR / config.PROJECT_NAME
+    files = sorted(f"{config.PROJECT_NAME}/{p.name}" for p in pkg.glob("*.py"))
+    layout = "\n".join([
+        "",
+        "## Project layout",
+        f"Edit these files; the package is run as `python -m {config.PROJECT_NAME}`:",
+        *files,
+    ])
+    return readme + "\n" + layout
 
 
 class ArmStrategy:
@@ -53,7 +87,7 @@ class ArmA(ArmStrategy):
 
     def __init__(self, run_dir, logger):
         super().__init__(run_dir, logger)
-        self.seed_readme = (config.SEED_PROJECT_DIR / "README.md").read_text(encoding="utf-8")
+        self.seed_readme = seed_readme_text()
         self.rolling_summary = ""
 
     def build_system_prompt(self, task_id: str) -> str:
@@ -87,7 +121,7 @@ class ArmB(ArmStrategy):
     def __init__(self, run_dir, logger):
         super().__init__(run_dir, logger)
         self.ledger = ledger.Ledger(run_dir)
-        self.seed_readme = (config.SEED_PROJECT_DIR / "README.md").read_text(encoding="utf-8")
+        self.seed_readme = seed_readme_text()
 
     def build_system_prompt(self, task_id: str) -> str:
         # Arm B carries no summary, but it gets the same seed README as Arm A:
@@ -147,7 +181,7 @@ class ArmC(ArmStrategy):
     def __init__(self, run_dir, logger, dry_run: bool = False):
         super().__init__(run_dir, logger)
         self.ledger = ledger.Ledger(run_dir)
-        self.seed_readme = (config.SEED_PROJECT_DIR / "README.md").read_text(encoding="utf-8")
+        self.seed_readme = seed_readme_text()
         self.judge = governance.make_judge(logger, dry_run)
 
     def build_system_prompt(self, task_id: str) -> str:

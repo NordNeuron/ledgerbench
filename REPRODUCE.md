@@ -63,6 +63,29 @@ export LEDGERBENCH_MODEL=qwen2.5-coder-32k          # the served model tag
 # export LEDGERBENCH_MAX_TOKENS=16000
 ```
 
+### Optional: show the project file layout (`LEDGERBENCH_SHOW_LAYOUT=1`)
+
+The published README lists the CLI commands and storage format but **not the
+source files**, while the generator is asked to return complete files without
+seeing the workspace. A model that doesn't know the layout may write a new
+top-level `taskcli.py` — which `python -m taskcli` never runs, because the
+seeded `taskcli/` package shadows it — so tasks fail for a reason unrelated to
+the memory condition. This shows up as near-zero pass rates across all arms.
+
+```bash
+export LEDGERBENCH_SHOW_LAYOUT=1
+```
+
+appends a short layout block (the source file **names** only, not their
+contents) to the README shown to **every** arm, so the arms stay a fair
+comparison and only the path-guessing confound is removed. Default (unset)
+reproduces the published protocol exactly. **If you enable it, report it as a
+protocol change alongside your numbers.**
+
+> Do not confuse this with showing the file *contents*: that would let the
+> model read earlier requirements straight from the code and would weaken the
+> memory comparison the benchmark is built on. This flag exposes names only.
+
 ## 4. Smoke test (a couple of tasks, one arm)
 
 ```bash

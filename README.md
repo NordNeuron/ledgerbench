@@ -153,7 +153,10 @@ export LEDGERBENCH_MODEL=qwen2.5-coder:32b           # the served model tag
 
 See **[REPRODUCE.md](REPRODUCE.md)** for the full local-Qwen runbook
 (serving the model with a large enough context window, the 60-run campaign
-loop, and committing the results).
+loop, and committing the results). It also documents the optional
+`LEDGERBENCH_SHOW_LAYOUT=1` flag, which lists the project's source-file names
+in the prompt (a fair, opt-in protocol change) for models that would
+otherwise fail by writing to the wrong file path.
 
 Run one arm/seed (real API calls). Choices are `A`, `B`, `C`, `C+`, `D`:
 
