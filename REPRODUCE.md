@@ -107,34 +107,55 @@ done
 step — it is many model calls per run. It is resumable in the sense that each
 run writes its own `runs/<id>/` directory; re-running only adds directories.
 
-## 6. Score and check isolation
+## 6. Regenerate every reported number — one command
 
 ```bash
-# Optional: re-score preserved workspace states against the current oracles.
+# Optional first: re-score preserved workspace states against current oracles.
 python -m harness.rescore runs/run_*
 
-# Metrics + H1 events + plots -> results/
-python -m harness.analyze
-
-# Hidden-oracle leak and separation-of-powers scans (expect 0 hits each).
-for r in runs/run_*; do python -m harness.analyze --leak-check "$r"; done
-for r in runs/run_*; do python -m harness.analyze --separation-check "$r"; done
+python -m harness.reproduce
 ```
-`results/metrics.csv` and `results/h1_events.csv` now contain every empirical
-number (M1 retention, H1 trap/rewrite/coercion counts, per-arm token costs,
-governance events), each traceable to a run directory.
+This writes everything the paper's numbers trace to, under `results/`:
+
+| File | Backs |
+|---|---|
+| `metrics.csv` | per-(run, task) M1, tokens, M4, governance events |
+| `h1_events.csv` | every H1 violation, with its channel (trap / rewrite / coerced) |
+| `summary_main.csv` | per-arm **Table 1**: M1@T24, H1-trap, H1-rewrite, coerced, capture, ktok/run |
+| `summary_tokens.csv` | per-arm **Table 2**: ktok/run, ×A, ×B |
+| `leakcheck.txt` | hidden-oracle leak scan, per run + total (expect 0) |
+| `separation.txt` | separation-of-powers scan, per run + total (expect 0) |
+| `summary.txt` | both tables rendered + scan totals |
+
+### Number → cell map (paper claim → committed data)
+
+Every number in the abstract is an aggregate of the two summary files:
+
+- M1@T24 per arm, and the abstract's "0.31 → 0.68–0.74" range → `summary_main.csv`, column `m1_at_t24`.
+- H1-trap / H1-rewrite / coerced counts, and "trap violations drop 77–100%" → `summary_main.csv` (+ the raw rows in `h1_events.csv`).
+- "21 capture events, zero elsewhere" → `summary_main.csv`, column `capture`.
+- ktok/run, "2.3× the baseline", "56% of the plain ledger" → `summary_tokens.csv`, columns `ktok_per_run`, `x_baseline_A`, `x_ledger_B`.
+- leak-check "0 hits", separation "0 hits" → `leakcheck.txt`, `separation.txt` (`TOTAL HITS`).
+
+Update the paper's Table 1, Table 2, and abstract to the values in these
+files. (Running a model other than the paper's original will give different
+numbers — report the ones the files show, for the model you actually ran, and
+note `LEDGERBENCH_SHOW_LAYOUT` if you set it.)
 
 ## 7. Commit the data
 
-`runs/` and `results/` are in `.gitignore`, so force-add what you want tracked:
+`runs/` and `results/` are gitignored, so force-add what to track. Commit the
+**log artifacts** (not `runs/*/workspace/`, which is a nested git repo and
+won't commit cleanly); `metrics.csv` and `h1_events.csv` recompute from
+`log.jsonl` alone, and the scan `.txt` files back the leak/separation/capture
+numbers.
 
 ```bash
-git add -f results/metrics.csv results/h1_events.csv results/*.png \
-           results/supersessions_*.json
-git add -f runs/            # optional: the raw per-seed logs (large)
-git commit -m "Add <model> run outputs: metrics, H1 events, isolation scans"
+git add -f runs/*/log.jsonl runs/*/ledger.json \
+           runs/*/supersessions.jsonl runs/*/rescore.json 2>/dev/null
+git add -f results/*.csv results/*.txt results/*.png results/supersessions_*.json
+git commit -m "Add <model> run outputs: logs, metrics, summaries, isolation scans"
 ```
 
-Committing at least `results/metrics.csv` (plus the command in §6 that
-produced it) is what makes the numbers verifiable — the open-science gap the
-arXiv endorsement check flagged.
+Now every number in the paper traces to a committed file via the map above —
+the open-science gap the arXiv endorsement check flagged.
