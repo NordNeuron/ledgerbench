@@ -45,7 +45,7 @@ against five memory strategies with \NSeedsPerArm{} independent runs each
 is regenerated from those logs by one command. Three results are robust under
 exploratory nonparametric tests with multiplicity correction. (1)~Every
 ledgered arm makes the hidden-oracle-correct change more often than a
-summary-only baseline (per-task pass rate \NMOnePassB--\NMOnePassC{} versus
+summary-only baseline (per-task pass rate \NMOnePassD--\NMOnePassC{} versus
 \NMOnePassA). (2)~Every ledgered arm commits fewer violations of earlier
 requirements than the baseline, by roughly half to two-thirds per run, and the
 ledgered arms do not differ from one another once violations committed under
@@ -363,7 +363,7 @@ arms. With \NSeedsPerArm{} seeds this endpoint is underpowered for effects of
 the size we observe.
 
 \paragraph{Ledgers make the correct change more often.} Judged by each task's
-own hidden oracle, every ledgered arm beats the baseline (\NMOnePassB--\NMOnePassC{}
+own hidden oracle, every ledgered arm beats the baseline (\NMOnePassD--\NMOnePassC{}
 versus \NMOnePassA; all four Holm-corrected comparisons significant, $\delta$
 between \NStMOnePassDvsADelta{} and \NStMOnePassCvsADelta). No pair of ledgered
 arms differs. Replaying earlier requirements' tests gives the agent concrete
@@ -460,7 +460,7 @@ D capture $>0$; C capture $=0$ & D \NCaptureD, C \NCaptureC & D refuted; C confi
 D late regressions (T19--T24) $\ge$ C & D \NLateRegressD, C \NLateRegressC & confirmed \\
 T14: stale A6/A10 block valid work in B & \NMFourLocalBFromTFourteen{} blocked iterations at T14+ & confirmed \\
 T14: C-family retires A6 and A10 & A6 retired at T14 in all governed runs; A10 gone by T14 in all & confirmed \\
-T20: vestigial code B $>$ C-family $>$ A & \NVestigialPctB\% / \NVestigialPctC--\NVestigialPctCplus\% / \NVestigialPctA\% of commits & undiscriminating (ceiling) \\
+T20: vestigial code B $>$ C-family $>$ A & \NVestigialPctB\% / \NVestigialPctD--\NVestigialPctC\% / \NVestigialPctA\% of commits & undiscriminating (ceiling) \\
 T24: B thrashes & \NTTwentyFourThrashB{} of \NSeedsPerArm{} B runs exhaust the budget & confirmed \\
 T24: C-family escalates the conflict & C \NTTwentyFourEscC, C+ \NTTwentyFourEscCplus, D \NTTwentyFourEscD{} of \NSeedsPerArm{} & partially \\
 \bottomrule
