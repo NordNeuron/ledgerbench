@@ -345,9 +345,14 @@ def compute(isolation_rows=None):
         "infrastructure_reruns": sum(c - 1 for c in starts_log.values()),
         "rerun_pairs": sorted(f"{a}/seed{s}" for (a, s), c in starts_log.items() if c > 1),
     }
+    # Counted from the committed archives, so the result does not depend on
+    # whether `unpack_runs --excluded` was run.
+    import tarfile
     excluded = {}
-    for d in sorted(config.ROOT_DIR.glob("runs_*")):
-        excluded[d.name] = len([x for x in d.iterdir() if (x / "log.jsonl").exists()])
+    for a in sorted((config.ROOT_DIR / "data" / "excluded").glob("runs_*.tar.xz")):
+        with tarfile.open(a, "r:xz") as tar:
+            excluded[a.name.split(".")[0]] = len({m.name.split("/")[1] for m in tar.getmembers()
+                                                  if m.name.endswith("/log.jsonl") and m.name.count("/") == 2})
     N["excluded_attempts"] = excluded
     return N
 
