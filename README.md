@@ -1,14 +1,17 @@
 # LedgerBench
 
-**When you give an AI coding agent a voice to remove its own tests, it uses
-it.** In the one setup where the agent could argue for retiring a
-requirement-check, it talked the automated judge into dropping checks
-**21 times**. Every other setup scored zero on that — because none of them
-gave the agent that channel. And that same permissive setup (Arm D) also
-finished with the **highest** score for keeping requirements satisfied
-(0.74 out of 1.0). The most flexible arm looked best on the headline
-number while quietly taking down the most guardrails. That tension is what
-this benchmark is about.
+**Does an executable requirement memory help an AI coding agent when
+requirements change, or does it calcify?** LedgerBench drives one coding agent
+through a fixed, pre-registered sequence of 24 tasks on a small command-line
+app, changes requirements partway through, plants trap tasks that tempt the
+agent to break earlier requirements, and compares five memory strategies with
+12 independent runs each (60 runs).
+
+**Every run log is in this repository, and every number below and in the
+paper is regenerated from those logs by one command** (see
+[Verifying the numbers](#verifying-the-numbers)). The current results come
+from a local open-weight model, Qwen3-Coder-30B-A3B served by Ollama; the
+write-up is [`paper/ledgerbench-qwen.tex`](paper/ledgerbench-qwen.tex).
 
 ## The thesis
 
@@ -23,100 +26,99 @@ is ever forgotten. LedgerBench asks the obvious follow-up question: does
 that ledger keep the agent honest, or does it **calcify** — so that old,
 now-wrong tests block correct new work?
 
-To find out, it runs an AI coding agent through a fixed sequence of **24
-tasks** on a small command-line to-do app, deliberately flips the storage
-requirement partway through (and a second requirement later), and compares
-five memory strategies over **12 random seeds each** (60 runs total). It
-was **pre-registered and frozen** before any run — predictions written
-down in advance, no peeking until all 60 finished.
-
 ## The four ledger arms (plus a baseline)
 
 | Setup | What the agent's memory is |
 |---|---|
 | **Baseline (A)** | No test ledger at all — just a rolling plain-text summary of previous sessions. |
-| **Ledger (B)** | Every requirement is compiled to runnable tests. The whole set replays on every change, and tests are **never removed** — even after a later requirement makes an old one wrong. |
+| **Ledger (B)** | Every requirement is compiled to runnable tests. The whole set replays on every change, and tests are **never removed** — even after a later requirement makes them wrong. |
 | **Governed ledger (C)** | Like B, but a **judge** can retire a test when documented evidence (an official requirement change) justifies it. |
 | **Governed + docket (C+)** | Like C, plus any test that keeps failing across several tasks is **auto-flagged** for the judge to review. |
 | **Governed + agent voice (D)** | Like C, plus the coding agent itself can **request** that a test be retired, and the judge sees the agent's argument. |
 
-The four "ledgered" arms are B, C, C+, and D; A is the no-ledger control
-they're measured against.
+## Findings (Qwen3-Coder-30B-A3B, 60 runs)
 
-## Findings
+Means over 12 runs per arm. "Per-task correctness" is each task's hidden
+oracle on its own final state; M1@T24 is the pre-registered end-state score.
+Violation counts are totals on the five primary requirements under the frozen
+scoring rules. Every value is listed with its source in
+[`results/claims.md`](results/claims.md).
 
-The main score, **M1@T24**, is "what fraction of all requirements so far
-is the project still satisfying by the final task" — higher is better.
+| Arm | Per-task correctness | M1@T24 | Trap violations | Rewrite violations | Coerced (excluded) | Tokens per run |
+|---|---|---|---|---|---|---|
+| **A** baseline | 0.597 | 0.368 | 12 | 44 | 0 | 940k |
+| **B** ledger | 0.719 | 0.569 | 0 | 0 | 27 | 2,291k |
+| **C** governed | 0.750 | 0.465 | 4 | 12 | 0 | 1,414k |
+| **C+** +docket | 0.743 | 0.420 | 11 | 13 | 0 | 1,405k |
+| **D** +agent voice | 0.698 | 0.351 | 5 | 12 | 0 | 1,479k |
 
-| Arm | Final retention (M1@T24) | Trap violations | Rewrite regressions | Tokens per run | Notable |
-|---|---|---|---|---|---|
-| **A** baseline | 0.306 | 13 | 14 | 384k | — |
-| **B** ledger | 0.684 | **0** | **0** | 875k | 9 *coerced* wrong changes; 2.3× the tokens |
-| **C** governed | 0.698 | 3 | **0** | 492k | same protection as B, far cheaper |
-| **C+** +docket | 0.677 | 3 | 6 | 480k | — |
-| **D** +agent voice | **0.740** | 2 | 7 | 483k | **21 capture events** |
+**What holds up** (exploratory Mann–Whitney tests, Holm-corrected):
 
-**What holds up:** At the 24-task horizon the ledger **earns its keep**.
-End-state retention roughly **doubles** versus the baseline (0.31 → 0.68–0.74),
-and violations on the planted "trap" requirements drop **77–100%**. Keeping
-an automated memory of past requirements genuinely helped the agent not
-regress on them.
+- **Ledgers make the correct change more often.** Every ledgered arm beats the
+  baseline on per-task correctness; the ledgered arms do not differ from each
+  other.
+- **Ledgers prevent requirement violations.** Every ledgered arm commits
+  significantly fewer violations of earlier requirements than the baseline —
+  about a third to a half of its per-run rate once all violations are counted.
+- **The plain ledger is expensive; governance recovers about a third.** B costs
+  2.44× the baseline's tokens and rejects valid work (369 repair iterations
+  whose code passed the hidden oracles were blocked by stale tests). The
+  governed arms cost 61–65% of B with the same correctness.
 
-**The catch, and the cost:** The plain append-only ledger (B) is rigid and
-expensive. It cost **875k tokens per run — 2.3× the baseline** — and
-produced **9 "coerced" regressions**: cases where a stale, now-invalid test
-literally forced the agent into making a wrong change to satisfy it. That's
-the calcification the thesis worried about, showing up as real money and
-real bad edits.
+**What does not:** the pre-registered end-state score (M1@T24) shows no
+detectable difference between any arms (Kruskal–Wallis p = 0.55); seed
+variance dominates at n = 12.
 
-**Honest caveat:** the retention differences *among* the four ledgered arms
-(0.68–0.74) are small relative to seed-to-seed variance, and formal
-statistics were out of scope for this phase. The large, robust gap is
-ledger-vs-baseline, not one ledger variant over another.
+**Read B's zeros carefully.** Arm B's 0 trap / 0 rewrite violations come from
+the pre-registered *coercion* rule, which excludes violations committed while
+a stale, evidence-invalidated test was failing in the repair feedback. In B
+such tests are never removed, so all 27 of its violations were excluded.
+Counted back in, B has 9 trap and 18 rewrite violations — no different from the
+governed arms.
 
-## The two predictions that were refuted
+## Pre-registered scorecard
 
-Both are stated here, not buried, because a pre-registration is only honest
-if the misses are as visible as the hits.
+| Prediction | Result |
+|---|---|
+| H1-trap: ledgered arms ≤ ⅓ of baseline | **Confirmed** for B and C; **refuted** for C+ (11) and D (5) vs threshold 4 |
+| H1-rewrite: ledgered arms ≤ ⅓ of baseline | **Confirmed** for all four |
+| Coercion only in B | Confirmed |
+| C keeps the planted bad test A11f forever | **Refuted** — retired via conflict escalation in 7 of 12 runs |
+| C+ dockets A11f | Confirmed (12 of 12), though the judge retired it via the docket only twice |
+| Arm D shows capture (agent talks the judge into removing tests) | **Refuted** — the agent made 3 requests in 12 runs; the one valid request was refused |
+| T14 stale tests block valid work in B; governed arms retire them | Confirmed |
+| T20 dead code concentrates in ledgered arms | Undiscriminating — 93–100% of commits in every arm keep it |
+| T24 conflict: B thrashes; governed arms escalate | B: confirmed (12/12); governed: partially (5–8 of 12) |
 
-**1. "Governance won't reintroduce regressions." — Refuted.**
-We predicted all four ledgered arms would commit at most **one-third** of
-the baseline's "rewrite-channel" regressions (baseline = 14, so the line was
-≈ 5). B and C passed cleanly (**0** each). But **C+ hit 6 and D hit 7** —
-both *over* the line. The reason is mechanical and important: every time the
-governance layer retires a test, it also removes the guard that test was
-providing, and the old regression is free to creep back in. **Flexibility
-has a measurable regression cost** — the more freely an arm could drop
-checks (C+ via docket, D via the agent's own lobbying), the more old bugs
-returned.
+One protocol deviation was made before the main campaign: the agent is told
+the project's source file **names** (`LEDGERBENCH_SHOW_LAYOUT=1`), identically
+in every arm. Without it the agent wrote its code to a file the tests never
+import. Excluded attempts, an infrastructure rerun and other incidents are
+documented in the paper and in [`data/README.md`](data/README.md).
 
-**2. "Ledgered arms will leave more dead code behind." — Refuted (undiscriminating).**
-After the second requirement change, a config setting became obsolete. We
-predicted the ledgered arms would cling to the deprecated code more than the
-baseline. Instead, **100% of runs in every arm — baseline included — left
-the deprecated fallback in place.** It's a flat ceiling: at this scale,
-models essentially never remove a deprecated-but-still-working fallback, so
-the metric can't tell the arms apart. Prediction unsupported.
+## History: the earlier DeepSeek campaign
 
-## The token-cost story for the governed ledger
+An earlier campaign with `deepseek-v4-flash` (reported in
+[`paper/ledgerbench.tex`](paper/ledgerbench.tex), `TRAPS.md` and
+`FINDINGS.md`) produced the "21 capture events" and "0.31 → 0.68–0.74"
+claims. Its run logs were lost when the machine holding them failed, so **none
+of those numbers can be verified and they are withdrawn**. The frozen task
+sequence, oracles and scoring rules from that study were reused unchanged for
+the Qwen campaign.
 
-The single most useful practical result: **governance (Arm C) delivers the
-plain ledger's protection at a fraction of its cost.**
+## Verifying the numbers
 
-| Arm | Tokens per run | vs. baseline | vs. plain ledger (B) |
-|---|---|---|---|
-| A baseline | 384k | 1.0× | 0.44× |
-| B plain ledger | 875k | 2.3× | 1.0× |
-| **C governed** | **492k** | **1.3×** | **0.56×** |
-| C+ +docket | 480k | 1.3× | 0.55× |
-| D +agent voice | 483k | 1.3× | 0.55× |
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+python -m harness.unpack_runs          # extract data/runs/*.tar.gz into runs/
+python -m harness.analyze              # regenerates results/metrics.csv + h1_events.csv byte-for-byte
+python -m harness.paper_numbers --isolation   # every paper number + leak/separation scans
+```
 
-Arm C matches B's protection — same doubled retention, **zero** rewrite
-regressions, comparable trap suppression — while spending only **56% of B's
-tokens**. Letting a judge retire genuinely-obsolete tests, instead of
-replaying all of them forever, is what buys that back. The two more
-permissive governed arms (C+, D) cost about the same as C but, per the
-refuted prediction above, trade some protection for their extra flexibility.
+`paper_numbers` writes `results/paper_numbers.json`, the claims table
+`results/claims.md`, and `paper/numbers.tex`, the macro file the paper
+includes, so the paper cannot quote a number the data does not produce.
 
 ---
 
@@ -131,9 +133,9 @@ source .venv/bin/activate       # macOS/Linux
 pip install -r requirements.txt
 ```
 
-Set an API key (never committed, never logged). The runs in this repo used
-DeepSeek's Anthropic-compatible endpoint; the harness works against any
-such provider via env overrides:
+To run new campaigns against a hosted model, set an API key (never committed,
+never logged). The harness works against any Anthropic-compatible provider via
+env overrides:
 
 ```bash
 export ANTHROPIC_API_KEY=...                         # your provider key
@@ -148,7 +150,7 @@ OpenAI-compatible endpoint — no Anthropic/DeepSeek key needed:
 export LEDGERBENCH_BACKEND=openai
 export OPENAI_BASE_URL=http://localhost:11434/v1     # Ollama; vLLM: :8000/v1
 export OPENAI_API_KEY=not-needed                     # local servers ignore it
-export LEDGERBENCH_MODEL=qwen2.5-coder:32b           # the served model tag
+export LEDGERBENCH_MODEL=qwen3-coder-128k            # the served model tag
 ```
 
 See **[REPRODUCE.md](REPRODUCE.md)** for the full local-Qwen runbook
@@ -195,8 +197,10 @@ harness/     the experiment harness (see BUILD_SPEC.md §2 for the full map)
 projects/    seed project(s) the agent edits — currently taskcli
 tasks/       task specs (YAML), reference requirement-assertions, evidence
 oracles/     HIDDEN correctness tests — never shown to the agent
-runs/        one directory per run (gitignored)
-results/     analyze.py output (gitignored)
+data/        committed run archives (main campaign + excluded attempts), see data/README.md
+runs/        one directory per run (unpacked from data/runs/; gitignored)
+results/     analysis outputs, committed: metrics, H1 events, isolation scans, claims table
+paper/       ledgerbench-qwen.tex (current), numbers.tex (generated), ledgerbench.tex (withdrawn numbers)
 ```
 
 ## Deeper reading
@@ -205,8 +209,9 @@ results/     analyze.py output (gitignored)
 - **[BUILD_SPEC.md](BUILD_SPEC.md)** — the full specification this implements.
 - **[FINDINGS.md](FINDINGS.md)** — the Phase-0 pilot write-up.
 - **[DIAGNOSTICS.md](DIAGNOSTICS.md)** — pilot diagnostics and corrections.
-- **[TRAPS.md](TRAPS.md)** — the trap-task dossier, pre-registration, and the full frozen results table.
+- **[TRAPS.md](TRAPS.md)** — the trap-task dossier and the frozen pre-registration (its results table is from the withdrawn DeepSeek campaign).
 
-*Results are from a single pre-registered campaign (5 arms × 12 seeds,
-`deepseek-v4-flash`, temperature 0.2). Formal significance testing was out
-of scope.*
+*Current results: one campaign, 5 arms × 12 runs, Qwen3-Coder-30B-A3B
+(Ollama `qwen3-coder:30b`, 128k context), temperature 0.2, frozen sequence
+`257dc61`. Statistics are exploratory; the pre-registration placed inference
+out of scope.*

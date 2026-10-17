@@ -1,0 +1,44 @@
+[
+  {
+    "assertion_id": "A1",
+    "evidence_id": "E1",
+    "task": "T6",
+    "reason": "The assertion assumes storage is a JSON file, which was invalidated by the regime change at T6 that migrated storage to SQLite.",
+    "timestamp": 1790457521.019346
+  },
+  {
+    "assertion_id": "A3",
+    "evidence_id": "E1",
+    "task": "T6",
+    "reason": "The assertion assumes storage is a JSON file, but the regime change at T6 migrated storage to SQLite, making the assumption invalid.",
+    "timestamp": 1790457521.514566
+  },
+  {
+    "assertion_id": "A4",
+    "evidence_id": "E1",
+    "task": "T6",
+    "reason": "The assertion assumes storage is in a JSON file, but the regime change at T6 migrated storage to SQLite, making `tasks.json` inaccessible and causing the test to fail.",
+    "timestamp": 1790457522.0632682
+  },
+  {
+    "assertion_id": "A6",
+    "evidence_id": "E2",
+    "task": "T14",
+    "reason": "The assertion's probing method assumes the existence of a `tasks` table, which was invalidated by the schema change at T14 that introduced the `items` table.",
+    "timestamp": 1790458302.9853911
+  },
+  {
+    "assertion_id": "A10",
+    "evidence_id": "E2",
+    "task": "T14",
+    "reason": "The assertion's probing method assumes the existence of a `tasks` table, which the evidence shows no longer exists in the schema after T14.",
+    "timestamp": 1790458303.475816
+  },
+  {
+    "assertion_id": "A5",
+    "evidence_id": "E3",
+    "task": "T20",
+    "reason": "The assertion's probing method assumes the environment variable configuration mechanism is valid, but the evidence shows this mechanism was deprecated at T20 in favor of config.toml, making the assumption invalid even if the underlying requirement remains valid.",
+    "timestamp": 1790459052.029889
+  }
+]

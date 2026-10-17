@@ -12,12 +12,12 @@ oracles, the governance logic, and the logging are identical to the Anthropic
 backend. See `harness/agent.py:OpenAICompatibleSolver`.
 
 > **Note on comparability.** The tables in the paper / `TRAPS.md` / `README.md`
-> were reported for `claude-sonnet-4-6`. Running here with Qwen produces a
+> were reported for `deepseek-v4-flash` (those numbers are now withdrawn: their run logs were lost). Running here with Qwen produces a
 > *new, real* dataset that documents **Qwen's** behavior — it is not a
-> reproduction of the Sonnet numbers. Commit the generated `results/` as the
+> reproduction of the DeepSeek numbers. Commit the generated `results/` as the
 > traceable backing for whatever model you actually ran, and label the model
 > in any numbers you publish. Do not paste these outputs under the existing
-> Sonnet tables.
+> DeepSeek tables.
 
 ---
 
@@ -33,17 +33,29 @@ pip install -r requirements.txt                      # includes the `openai` cli
 
 ### Option A — Ollama
 ```bash
-ollama pull qwen2.5-coder:32b     # or :7b / :14b, whatever you run locally
+ollama pull qwen3-coder:30b       # the model used for the published Qwen campaign
 ```
 The default Ollama context window (4096 tokens) is **too small** — the ledger
 prompts grow long and will be silently truncated, corrupting the results.
 Raise it with a Modelfile:
 ```bash
-printf 'FROM qwen2.5-coder:32b\nPARAMETER num_ctx 32768\n' > Modelfile
-ollama create qwen2.5-coder-32k -f Modelfile
+ollama create qwen3-coder-128k -f serving/Modelfile.qwen3-coder-128k   # num_ctx 131072
 ollama serve   # if not already running; endpoint: http://localhost:11434/v1
 ```
-Use `qwen2.5-coder-32k` as the model tag below.
+Use `qwen3-coder-128k` as the model tag below.
+
+**Context size matters.** A 32k or 64k window is not enough: repair loops in the
+ledgered arms grow prompts past 85k tokens, and Ollama then truncates them
+silently (`truncated = 1` in `~/.ollama/logs/server.log`). To fit 128k in
+memory, quantize the KV cache when starting the server:
+
+```bash
+launchctl setenv OLLAMA_FLASH_ATTENTION 1    # macOS app; on Linux export these before `ollama serve`
+launchctl setenv OLLAMA_KV_CACHE_TYPE q8_0
+```
+
+Then restart Ollama and check `ollama ps` shows `100% GPU` and context `131072`.
+`launchctl setenv` does not survive a reboot.
 
 ### Option B — vLLM
 ```bash
@@ -58,7 +70,7 @@ python -m vllm.entrypoints.openai.api_server \
 export LEDGERBENCH_BACKEND=openai
 export OPENAI_BASE_URL=http://localhost:11434/v1   # Ollama; vLLM: :8000/v1
 export OPENAI_API_KEY=not-needed                    # local servers ignore it
-export LEDGERBENCH_MODEL=qwen2.5-coder-32k          # the served model tag
+export LEDGERBENCH_MODEL=qwen3-coder-128k           # the served model tag
 # Reasoning variants (e.g. QwQ) spend output budget on thinking; raise if so:
 # export LEDGERBENCH_MAX_TOKENS=16000
 ```
@@ -97,44 +109,35 @@ record shows `"backend": "openai"` and your model tag.
 ## 5. Full campaign (5 arms × 12 seeds = 60 runs)
 
 ```bash
-for arm in A B C C+ D; do
-  for seed in $(seq 1 12); do
-    python -m harness.run_pilot --arm "$arm" --seed "$seed"
-  done
-done
+mkdir -p logs
+nohup caffeinate -i scripts/run_campaign.sh > logs/campaign.log 2>&1 &   # macOS; drop caffeinate elsewhere
 ```
-(Unset `LEDGERBENCH_TASKS` first so all 24 tasks run.) This is the expensive
-step — it is many model calls per run. It is resumable in the sense that each
-run writes its own `runs/<id>/` directory; re-running only adds directories.
 
-## 6. Score and check isolation
+This is the exact launcher used for the published Qwen campaign. It runs the
+60 arm/seed pairs sequentially, writes each run's stdout to `logs/`, skips
+pairs that already finished (so it can be restarted after an interruption),
+and runs `harness.analyze` at the end. Expect roughly 40–120 minutes per run on a single Apple-silicon
+machine (the plain-ledger arm B is the slowest).
+
+## 6. Score, check isolation, regenerate every number
 
 ```bash
-# Optional: re-score preserved workspace states against the current oracles.
-python -m harness.rescore runs/run_*
-
-# Metrics + H1 events + plots -> results/
-python -m harness.analyze
-
-# Hidden-oracle leak and separation-of-powers scans (expect 0 hits each).
-for r in runs/run_*; do python -m harness.analyze --leak-check "$r"; done
-for r in runs/run_*; do python -m harness.analyze --separation-check "$r"; done
+python -m harness.analyze                     # results/metrics.csv, results/h1_events.csv, plots
+python -m harness.paper_numbers --isolation   # leak + separation scans on every run, then all numbers
 ```
-`results/metrics.csv` and `results/h1_events.csv` now contain every empirical
-number (M1 retention, H1 trap/rewrite/coercion counts, per-arm token costs,
-governance events), each traceable to a run directory.
+
+`paper_numbers` writes `results/paper_numbers.json`, `results/claims.md` (claim →
+value → source) and `paper/numbers.tex`, the macro file the paper includes.
 
 ## 7. Commit the data
 
-`runs/` and `results/` are in `.gitignore`, so force-add what you want tracked:
-
 ```bash
-git add -f results/metrics.csv results/h1_events.csv results/*.png \
-           results/supersessions_*.json
-git add -f runs/            # optional: the raw per-seed logs (large)
-git commit -m "Add <model> run outputs: metrics, H1 events, isolation scans"
+python -m harness.unpack_runs --pack   # runs/ + excluded attempts -> data/*.tar.xz + data/SHA256SUMS
+git add data/ logs/ results/ paper/numbers.tex
+git commit -m "Add <model> run data and regenerated numbers"
 ```
 
-Committing at least `results/metrics.csv` (plus the command in §6 that
-produced it) is what makes the numbers verifiable — the open-science gap the
-arXiv endorsement check flagged.
+`runs/` itself stays ignored; the compressed archives (about 40 MB for 60 runs)
+are what is committed, and `python -m harness.unpack_runs` restores them.
+Commit any excluded attempts too, and say why they were excluded
+(`data/README.md`).

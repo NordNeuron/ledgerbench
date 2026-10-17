@@ -1,0 +1,51 @@
+[
+  {
+    "assertion_id": "A1",
+    "evidence_id": "E1",
+    "task": "T6",
+    "reason": "The assertion assumes storage is a JSON file, which was invalidated by the regime change at T6 that migrated storage to SQLite.",
+    "timestamp": 1790429345.526762
+  },
+  {
+    "assertion_id": "A3",
+    "evidence_id": "E1",
+    "task": "T6",
+    "reason": "The assertion assumes storage is a JSON file, but the regime change at T6 migrated storage to SQLite, making the assumed file `tasks.json` inaccessible and causing the test to fail.",
+    "timestamp": 1790429346.128448
+  },
+  {
+    "assertion_id": "A4",
+    "evidence_id": "E1",
+    "task": "T6",
+    "reason": "The assertion assumes storage is a JSON file, but the regime change at T6 migrated storage to SQLite, making `tasks.json` inaccessible and causing the test to fail.",
+    "timestamp": 1790429346.6674209
+  },
+  {
+    "assertion_id": "A6",
+    "evidence_id": "E2",
+    "task": "T14",
+    "reason": "The assertion's probing method assumes the existence of a `tasks` table, which was invalidated by the schema change at T14 that introduced the `items` table.",
+    "timestamp": 1790429955.621587
+  },
+  {
+    "assertion_id": "A10",
+    "evidence_id": "E2",
+    "task": "T14",
+    "reason": "The assertion's probing method assumes the existence of a `tasks` table, which the evidence shows no longer exists in the schema after T14.",
+    "timestamp": 1790429956.107844
+  },
+  {
+    "assertion_id": "A11f",
+    "evidence_id": "conflict",
+    "task": "T17",
+    "reason": "The older assertion A11f incorrectly assumes error messages must start with \"error: \", while the evidence shows the requirement only mandates errors go to stderr with a contracted exit code, making the assertion invalid under the updated regime.",
+    "timestamp": 1790430423.627316
+  },
+  {
+    "assertion_id": "A5",
+    "evidence_id": "E3",
+    "task": "T20",
+    "reason": "The assertion's probing method assumes the environment variable configuration mechanism is valid, but the evidence shows this mechanism was deprecated at T20 in favor of config.toml, making the assumption invalid even if the underlying requirement remains valid.",
+    "timestamp": 1790430609.6718569
+  }
+]

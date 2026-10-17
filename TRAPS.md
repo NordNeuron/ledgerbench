@@ -459,6 +459,12 @@ persisting after recovery count as genuine. Zero discretion.
 
 ## MAIN RUNS — FINAL RESULTS (60/60, analyzed once against frozen rules, 2026-07-12)
 
+> **Withdrawn numbers.** The run logs behind this document's results were lost when the
+> machine holding them failed, so its numbers cannot be verified and are withdrawn. The
+> current, fully data-backed results are in `paper/ledgerbench-qwen.tex` and
+> `results/claims.md`; the frozen sequence and scoring rules are unchanged.
+
+
 Completion: all 60 arm/seed pairs (infrastructure history: 6-day logoff
 kill at 6/60; 402 balance exhaustion at 27/60; both classes rerun per the
 pre-registered rule; final leg completed off-peak). Isolation: leak-check

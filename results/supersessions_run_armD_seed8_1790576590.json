@@ -1,0 +1,65 @@
+[
+  {
+    "assertion_id": "A1",
+    "evidence_id": "E1",
+    "task": "T6",
+    "reason": "The assertion assumes storage is a JSON file, but the regime change at T6 migrated storage to SQLite, making the assumption false.",
+    "timestamp": 1790576696.2291782
+  },
+  {
+    "assertion_id": "A3",
+    "evidence_id": "E1",
+    "task": "T6",
+    "reason": "The assertion assumes storage is a JSON file, but the regime change at T6 migrated storage to SQLite, making the assumed file no longer exist.",
+    "timestamp": 1790576696.761617
+  },
+  {
+    "assertion_id": "A4",
+    "evidence_id": "E1",
+    "task": "T6",
+    "reason": "The assertion assumes storage is in a JSON file, but the regime change at T6 migrated storage to SQLite, making `tasks.json` inaccessible and causing the test to fail.",
+    "timestamp": 1790576697.312502
+  },
+  {
+    "assertion_id": "A10",
+    "evidence_id": "conflict",
+    "task": "T13",
+    "reason": "The older assertion A10 assumes the system uses SQLite storage with a tasks_table schema, but the newly admitted assertion A13 uses JSON array export format, indicating a change in the underlying requirements regime that invalidates the assumptions of A10.",
+    "timestamp": 1790577299.7382662
+  },
+  {
+    "assertion_id": "A6",
+    "evidence_id": "E2",
+    "task": "T14",
+    "reason": "The assertion's probing method assumes the existence of a `tasks` table, which was invalidated by the schema change at T14 that introduced the `items` table.",
+    "timestamp": 1790577300.4224908
+  },
+  {
+    "assertion_id": "A13",
+    "evidence_id": "conflict",
+    "task": "T18",
+    "reason": "The older assertion A13 assumes export format is JSON array, but the evidence shows the system now uses CSV format for exports, making the assertion's probing method invalid.",
+    "timestamp": 1790578352.5057259
+  },
+  {
+    "assertion_id": "A14",
+    "evidence_id": "conflict",
+    "task": "T18",
+    "reason": "The older assertion assumes the existence of an \"items\" table and absence of a \"tasks\" table, which conflicts with the new requirement that likely changed the database schema to use a different storage format or table structure.",
+    "timestamp": 1790578353.1548219
+  },
+  {
+    "assertion_id": "A11f",
+    "evidence_id": "conflict",
+    "task": "T19",
+    "reason": "The older assertion A11f incorrectly assumes error messages must start with \"error: \", while the evidence and new requirements regime allow for more flexible error message formatting as long as errors go to stderr with the correct exit code.",
+    "timestamp": 1790578541.453321
+  },
+  {
+    "assertion_id": "A5",
+    "evidence_id": "E3",
+    "task": "T20",
+    "reason": "The assertion's probing method assumes the environment variable configuration mechanism is supported, but the new requirement deprecates `TASKCLI_TODAY` in favor of `config.toml`, invalidating the test under the updated regime.",
+    "timestamp": 1790578542.3078332
+  }
+]

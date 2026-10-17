@@ -1,0 +1,51 @@
+[
+  {
+    "assertion_id": "A1",
+    "evidence_id": "E1",
+    "task": "T6",
+    "reason": "The assertion assumes storage is a JSON file, but the regime change at T6 migrated storage to SQLite, making the assumption false.",
+    "timestamp": 1790590069.595385
+  },
+  {
+    "assertion_id": "A3",
+    "evidence_id": "E1",
+    "task": "T6",
+    "reason": "The assertion assumes storage is a JSON file, but the regime change at T6 migrated storage to SQLite, making the assumed file no longer exist.",
+    "timestamp": 1790590070.143065
+  },
+  {
+    "assertion_id": "A4",
+    "evidence_id": "E1",
+    "task": "T6",
+    "reason": "The assertion assumes storage is a JSON file, but the regime change at T6 migrated storage to SQLite, making `tasks.json` inaccessible and causing the test to fail.",
+    "timestamp": 1790590070.6821601
+  },
+  {
+    "assertion_id": "A6",
+    "evidence_id": "E2",
+    "task": "T14",
+    "reason": "The assertion's probing method assumes the existence of the `tasks` table, which no longer exists after the schema change at T14.",
+    "timestamp": 1790590967.087625
+  },
+  {
+    "assertion_id": "A10",
+    "evidence_id": "E2",
+    "task": "T14",
+    "reason": "The assertion's probing method assumes the existence of a `tasks` table, which the evidence shows no longer exists in the schema after T14.",
+    "timestamp": 1790590967.586508
+  },
+  {
+    "assertion_id": "A11f",
+    "evidence_id": "conflict",
+    "task": "T19",
+    "reason": "The older assertion A11f incorrectly assumes error messages must start with \"error: \", while the evidence and requirement R11 only mandate that errors go to stderr with the correct exit code, making the assertion invalid under the current regime.",
+    "timestamp": 1790592810.7651
+  },
+  {
+    "assertion_id": "A5",
+    "evidence_id": "E3",
+    "task": "T20",
+    "reason": "The assertion's probing method assumes the environment variable configuration mechanism is supported, but the new requirement deprecates `TASKCLI_TODAY` in favor of `config.toml`, making the assumed mechanism invalid under the updated regime.",
+    "timestamp": 1790592811.631739
+  }
+]

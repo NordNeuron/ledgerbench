@@ -1,0 +1,51 @@
+[
+  {
+    "assertion_id": "A1",
+    "evidence_id": "E1",
+    "task": "T6",
+    "reason": "The assertion assumes storage is a JSON file, which was invalidated by the regime change at T6 that migrated storage to SQLite.",
+    "timestamp": 1790487193.206744
+  },
+  {
+    "assertion_id": "A3",
+    "evidence_id": "E1",
+    "task": "T6",
+    "reason": "The assertion assumes storage is a JSON file, but the regime change at T6 migrated storage to SQLite, making the assumption invalid.",
+    "timestamp": 1790487193.7045991
+  },
+  {
+    "assertion_id": "A4",
+    "evidence_id": "E1",
+    "task": "T6",
+    "reason": "The assertion assumes storage is in a JSON file, but the regime change at T6 migrated storage to SQLite, making `tasks.json` inaccessible and causing the test to fail.",
+    "timestamp": 1790487194.263765
+  },
+  {
+    "assertion_id": "A10",
+    "evidence_id": "conflict",
+    "task": "T13",
+    "reason": "The older assertion A10 assumes a SQLite storage backend and specific schema, but the newly admitted assertion A13 uses a JSON array export format, indicating the requirements regime has changed to favor JSON over SQLite storage.",
+    "timestamp": 1790488268.289917
+  },
+  {
+    "assertion_id": "A6",
+    "evidence_id": "E2",
+    "task": "T14",
+    "reason": "The assertion's probing method assumes the existence of a `tasks` table, which was invalidated by the schema change at T14 that introduced the `items` table.",
+    "timestamp": 1790488268.9640121
+  },
+  {
+    "assertion_id": "A14",
+    "evidence_id": "conflict",
+    "task": "T16",
+    "reason": "The older assertion assumes the existence of an \"items\" table and absence of a \"tasks\" table, which conflicts with the new requirement that likely changes the database schema to use a different storage structure or table naming convention.",
+    "timestamp": 1790488556.389272
+  },
+  {
+    "assertion_id": "A5",
+    "evidence_id": "E3",
+    "task": "T20",
+    "reason": "The assertion's probing method assumes the environment variable configuration mechanism is still supported, but E3 deprecates `TASKCLI_TODAY` in favor of `config.toml`, making the assumed mechanism invalid under the new regime.",
+    "timestamp": 1790488910.3811321
+  }
+]
