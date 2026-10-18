@@ -1,0 +1,51 @@
+[
+  {
+    "assertion_id": "A1",
+    "evidence_id": "E1",
+    "task": "T6",
+    "reason": "The assertion assumes storage is a JSON file, which was invalidated by the regime change at T6 that migrated storage to SQLite.",
+    "timestamp": 1790494332.332526
+  },
+  {
+    "assertion_id": "A3",
+    "evidence_id": "E1",
+    "task": "T6",
+    "reason": "The assertion assumes storage is a JSON file, but the regime change at T6 migrated storage to SQLite, making the assumption invalid.",
+    "timestamp": 1790494332.827661
+  },
+  {
+    "assertion_id": "A4",
+    "evidence_id": "E1",
+    "task": "T6",
+    "reason": "The assertion assumes storage is a JSON file, but the regime change at T6 migrated storage to SQLite, making `tasks.json` inaccessible and causing the test to fail.",
+    "timestamp": 1790494333.376759
+  },
+  {
+    "assertion_id": "A10",
+    "evidence_id": "conflict",
+    "task": "T13",
+    "reason": "The older assertion A10 assumes a SQLite storage backend and specific schema, but the newly admitted assertion A13 uses a JSON array export format, indicating the requirements regime has changed to favor JSON over SQLite storage.",
+    "timestamp": 1790495193.228041
+  },
+  {
+    "assertion_id": "A11f",
+    "evidence_id": "telemetry-docket",
+    "task": "T13",
+    "reason": "The assertion overreaches by encoding an incidental output format (starting with \"error: \") that is not required by the actual requirement R11, which only mandates errors go to stderr with the correct exit code.",
+    "timestamp": 1790495194.377541
+  },
+  {
+    "assertion_id": "A6",
+    "evidence_id": "E2",
+    "task": "T14",
+    "reason": "The assertion's probing method assumes the existence of a `tasks` table, which was invalidated by the schema change at T14 that migrated tasks to an `items` table.",
+    "timestamp": 1790495195.064661
+  },
+  {
+    "assertion_id": "A5",
+    "evidence_id": "E3",
+    "task": "T20",
+    "reason": "The assertion's probing method assumes the environment variable configuration mechanism is still supported, but E3 deprecates `TASKCLI_TODAY` in favor of `config.toml`, making the assumed mechanism invalid under the new regime.",
+    "timestamp": 1790496050.122539
+  }
+]

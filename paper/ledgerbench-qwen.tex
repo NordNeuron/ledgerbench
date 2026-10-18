@@ -1,0 +1,641 @@
+\documentclass[11pt]{article}
+
+% --- Dependency-light preamble: compiles on a stock TeX Live / Overleaf / arXiv ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=1in]{geometry}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{array}
+\usepackage{microtype}
+\usepackage[hidelinks]{hyperref}
+\usepackage{url}
+\setlength{\emergencystretch}{3em}  % avoid overfull lines from long identifiers and paths
+
+% Every empirical number in this paper is a macro generated from the committed
+% run data by `python -m harness.paper_numbers` (see results/claims.md).
+\input{numbers}
+
+\title{\textbf{Executable Requirement Memory\\
+for LLM Coding Agents\\
+Under Changing Requirements:\\
+An Open-Data Study with a Local Open-Weight Model}}
+
+\author{Pankaj Kumar\thanks{Independent researcher.
+Correspondence: \texttt{contact@nordneuron.com}.
+Code, frozen task sequence, pre-registration, every run log, and the script
+that regenerates every number in this paper:
+\url{https://github.com/NordNeuron/ledgerbench}.}}
+
+\date{October 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+An LLM coding agent that works across many sessions must carry earlier
+requirements forward, and those requirements change. One proposal is an
+\emph{executable} memory: compile each requirement into tests and replay an
+append-only ledger of them on every change. The risk is that the ledger
+calcifies, so that stale tests block correct new work. We run LedgerBench, a
+benchmark with a frozen, pre-registered 24-task sequence containing two
+requirement regime changes, five trap tasks and a planted defective test,
+against five memory strategies with \NSeedsPerArm{} independent runs each
+(\NNRuns{} runs), using a locally served open-weight model
+(Qwen3-Coder-30B-A3B). Every run log is public, and every number in this paper
+is regenerated from those logs by one command. Three results are robust under
+exploratory nonparametric tests with multiplicity correction. (1)~Every
+ledgered arm makes the hidden-oracle-correct change more often than a
+summary-only baseline (per-task pass rate \NMOnePassD--\NMOnePassC{} versus
+\NMOnePassA). (2)~Every ledgered arm commits fewer violations of earlier
+requirements than the baseline, by roughly half to two-thirds per run, and the
+ledgered arms do not differ from one another once violations committed under
+stale-test pressure are counted. (3)~The plain append-only ledger costs
+$\NTokRatioBA\times$ the baseline's tokens, while evidence-governed variants
+cost \NTokPctOfBCplus--\NTokPctOfBD\% of the plain ledger. The pre-registered
+primary endpoint, cumulative success at the final task, shows no detectable
+difference between arms (Kruskal--Wallis $p=\NStMOneTwentyFourKwP$): seed
+variance dominates. Of the pre-registered confirmatory predictions, H1-trap
+holds for two of four ledgered arms and H1-rewrite for all four, but the plain
+ledger's clean H1 record depends entirely on the pre-registered exclusion of
+coerced violations. We report one protocol deviation, made before the main
+campaign, which tells the agent the project's file names; without it the agent
+could not locate the code.
+\end{abstract}
+
+\section{Introduction}
+
+Real software changes its mind. A requirement settled one week is overturned
+the next: ``store tasks in a JSON file'' becomes ``store them in SQLite.'' An
+LLM coding agent working across sessions has no durable memory of its own, so
+some mechanism must carry the accumulated requirements forward. A natural
+mechanism is an \emph{executable} memory: compile each requirement into
+automated tests, keep an append-only ledger of them, and replay the ledger on
+every proposed change, so that a requirement once satisfied is never silently
+dropped.
+
+The risk is the mirror image of the benefit. When a requirement is overturned,
+the tests that encode it do not become irrelevant; they are about exactly the
+thing that changed, and they fail against any implementation of the new
+requirement. An agent gated on the whole ledger may then be unable to make
+correct progress, so that the memory meant to keep it honest instead
+\emph{calcifies}. Governance can help: an isolated judge could retire tests that
+documented evidence shows to be stale. But every retirement also removes a
+guard.
+
+LedgerBench isolates this tension with a frozen 24-task sequence on a small
+command-line application, five memory strategies, and hidden oracles that score
+correctness independently of whatever tests the agent is held to. An earlier
+version of this study was run against a hosted model; its run logs were lost
+when the machine that held them failed, so none of its numbers can be verified
+and we do not report them. This paper is a complete re-execution of the frozen
+protocol on a local open-weight model, with every log committed.
+
+Contributions:
+\begin{enumerate}
+\item An \textbf{open-data} execution of a pre-registered benchmark for agent
+memory under changing requirements. All \NNRuns{} run logs (every prompt,
+response, verification and oracle result), the workspaces' full git
+histories, and a script that regenerates each of the numbers in this paper are
+public (Section~\ref{sec:availability}).
+\item Evidence, with exploratory inferential statistics, that executable
+requirement ledgers improve per-task correctness and roughly halve requirement
+violations relative to a summary-only memory, at a large token cost that
+evidence-governed retirement reduces by about a third
+(Section~\ref{sec:results}).
+\item A candid pre-registered scorecard, including refuted predictions and a
+sensitivity analysis showing that one pre-registered scoring rule, coercion
+exclusion, determines the plain ledger's apparent perfection
+(Section~\ref{sec:scorecard}).
+\item Practical lessons for running long-horizon agent benchmarks on local
+models: silent context truncation and an unstated file layout each corrupted
+early attempts, and we document how we detected and handled both
+(Section~\ref{sec:setup}).
+\end{enumerate}
+
+\section{Related work}
+\label{sec:related}
+
+\paragraph{Benchmarks for coding agents.} SWE-bench~\cite{swebench} evaluates
+whether models resolve real GitHub issues, one issue at a time, against a fixed
+repository state. LedgerBench differs in two ways: tasks arrive as a
+\emph{sequence} on one evolving codebase, and requirements stated early must
+survive later work, including deliberate changes of regime.
+
+\paragraph{Memory for LLM agents.} Generative agents~\cite{generativeagents}
+maintain a natural-language memory stream with retrieval and reflection;
+MemGPT~\cite{memgpt} pages information between a bounded context and external
+storage; Reflexion~\cite{reflexion} carries verbal self-feedback across
+attempts. Long-term conversational memory benchmarks such as
+LoCoMo~\cite{locomo} test recall over long dialogues, and long-context studies
+show that models use information unevenly across a long
+prompt~\cite{lostinmiddle}. Learned retrieval over memory graphs, such as
+HAGE~\cite{hage2026}, optimizes which memories to surface. These lines share an
+assumption that the stored facts stay true. LedgerBench's question is what
+happens when they \emph{expire}: our Arm~A is a summary memory in the spirit of
+reflection-based approaches, and Arms~B--D are executable memories with
+different retirement rules.
+
+\paragraph{Regression testing and test evolution.} Replaying accumulated tests
+on every change is regression testing~\cite{yooharman}; requirement-to-test
+links are a form of requirements traceability~\cite{gotel}; and keeping tests
+in step with intended behaviour is the test-repair
+problem~\cite{reassert}. Test-driven practice~\cite{beck} makes tests the
+specification. Our ledger is an automated, agent-facing version of this
+practice, and our stale-test failure mode is the familiar obsolete-test problem
+seen from the agent's side.
+
+\paragraph{Specification gaming.} When an optimized system can influence the
+measure it is judged by, it may improve the measure without improving the
+target~\cite{amodei}. Our Arm~D lets the agent ask to retire its own tests, a
+discrete and auditable version of that channel.
+
+\paragraph{Pre-registration.} Freezing hypotheses and analysis rules before
+seeing data separates confirmatory from exploratory claims~\cite{nosek}. We
+re-use the original frozen rules unchanged and label every non-registered
+analysis as exploratory.
+
+\section{Benchmark design}
+\label{sec:design}
+
+\subsection{Task sequence}
+
+The seed project, \texttt{taskcli}, is a plain standard-library Python
+command-line task manager (\texttt{add}, \texttt{list}, \texttt{done},
+\texttt{delete}). A fixed sequence of \NNTasks{} tasks evolves it in sessions of
+three tasks; context is cleared at each session boundary. The sequence contains:
+
+\begin{itemize}
+\item \textbf{Regime changes.} A storage migration (JSON file to SQLite) at T6,
+a contradictory schema change (table \texttt{tasks} to \texttt{items}) at T14,
+and a merely-obsolete change (\texttt{config.toml} replacing environment
+variables) at T20. Each ships an \emph{evidence artifact} naming the assertion
+assumptions it invalidates.
+\item \textbf{Trap tasks.} \NNTrapTasks{} non-adjacent tasks (T15, T17, T19,
+T21, T23) whose natural implementation tempts the agent to break an earlier,
+still-binding requirement. Five \emph{primary} requirements, fixed by a
+calibration criterion before registration, carry the confirmatory tests:
+silent success (R9), insertion-order default (R2-order), the exit-code contract
+(R11), atomic writes for file outputs (R10) and pipe safety (R12). Two
+secondary requirements (R13, R2-ids) are exploratory.
+\item \textbf{A planted defective assertion} (A11f) that encodes an
+error-message format no prompt requires, and a \textbf{final conflict} (T24)
+that is jointly unsatisfiable with an earlier requirement and has no evidence
+on either side.
+\end{itemize}
+
+Each task has \NAssertMin--\NAssertMax{} reference assertion tests (what the
+agent may be held to) and \NOracleMin--\NOracleMax{} hidden oracle tests
+(\NOracleTotal{} in total) that probe the same requirements end-to-end and
+remain valid across migrations. The oracles are never shown to the agent.
+
+\subsection{The five arms}
+
+All arms run the same model on the same tasks; they differ in what memory the
+agent carries and how a proposed change is verified.
+
+\begin{description}
+\item[A --- Summary baseline.] A rolling model-written summary across sessions;
+each task is verified only against its own reference assertions.
+\item[B --- Append-only ledger.] Every admitted assertion is replayed on every
+change and never removed; the assertion texts are the carried context.
+\item[C --- Evidence-governed ledger.] B plus an isolated judge (a separate
+conversation) that reviews assertions flagged by an evidence artifact, and
+escalates admission-time conflicts, and may retire an assertion to a log-only
+audit pool. Generator prompts never contain governance vocabulary or retired
+assertion content.
+\item[C+ --- Governed + telemetry docket.] C plus automatic judge review of any
+assertion that fails in the repair loops of at least two distinct tasks.
+\item[D --- Governed + generator voice.] C plus a channel through which the
+agent may request a test's retirement, with the judge shown the agent's
+justification; a retirement granted on that basis is scored as
+\emph{capture}.
+\end{description}
+
+\subsection{Metrics and frozen scoring rules}
+
+The pre-registered primary endpoint is \textbf{M1@T24}: the fraction of tasks
+whose hidden oracles pass on the final workspace. We also report the per-task
+oracle pass rate (each task's own oracle on its own final state), regressions
+(M2), blocked valid solutions (M4: the oracle passes but ledger replay fails;
+structurally zero in Arm~A), governance activity (M6) and tokens (M7).
+Requirement violations are detected by standing oracle detectors and split into
+two pre-registered channels: \textbf{H1-trap}, a violation at the requirement's
+trap task, and \textbf{H1-rewrite}, a violation anywhere else. Two mechanical
+exclusions were frozen with the rules. A violation during a \emph{broken
+window} (the workspace fails a scripted add/list smoke probe) is skipped. A
+violation is \emph{coerced}, and excluded from H1, when the repair feedback at
+that task contained a failing assertion invalidated by evidence. Violations at
+the T24 conflict are reported separately.
+
+The confirmatory hypotheses are that each ledgered arm commits at most one third
+of Arm~A's H1-trap and H1-rewrite violations on the primary requirements. The
+sequence, oracles and these rules were frozen at commit \texttt{257dc61}.
+
+\section{Experimental setup}
+\label{sec:setup}
+
+\paragraph{Model and serving.} All generator, summary and judge calls use
+Qwen3-Coder-30B-A3B-Instruct~\cite{qwen3}, a mixture-of-experts coding model
+with about 3B active parameters, in the Ollama \texttt{qwen3-coder:30b} build
+(Q4\_K\_M quantization), served by Ollama~0.34.4 through its
+OpenAI-compatible endpoint. The served variant (\texttt{\NModel}) sets a
+131{,}072-token context window; the key--value cache was quantized to 8 bits
+with flash attention enabled so that the model and full context fit in GPU
+memory. Temperature was \NTemperature{} and the per-call output limit was
+\NMaxTokens{} tokens; the other sampling parameters were the build's
+defaults. Hardware was a single Apple M5 Max Mac Studio with 36\,GB of unified
+memory.
+
+\paragraph{Runs.} Five arms $\times$ \NSeedsPerArm{} seeds $=$ \NNRuns{}
+runs, run sequentially. The harness does not pass the seed to the model
+server, so seeds are independent repeats rather than reproducible random
+streams; the committed logs, not a rerun, are the evidence. Repair budget
+$k=\NRepairBudget$.
+
+\paragraph{Frozen inputs.} The task definitions, reference assertions and
+oracles used are byte-identical to the freeze commit. The scoring code's H1
+rules and metric definitions are unchanged since the freeze; later edits only
+corrected the two isolation scans (logged in July 2026, before this campaign)
+and made output paths repo-relative.
+
+\paragraph{Protocol deviation: project layout.} The generator must return
+complete files but never sees the workspace, and the seed README never names
+the source files. In a two-task smoke test under the published protocol the
+model wrote a new top-level \texttt{taskcli.py}, which \texttt{python -m
+taskcli} never runs because the seeded \texttt{taskcli/} package shadows it,
+and both tasks failed every repair iteration for that reason alone. We
+therefore enabled an opt-in flag that appends the list of source file
+\emph{names} (not contents) to the README shown identically to every arm. The
+same smoke test then passed both tasks on the first iteration. The flag was
+set before the main campaign and the logs confirm that \NLayoutCalls{} of
+\NGeneratorCalls{} generator calls carried it. This is a change to the
+registered protocol; it removes a path-guessing confound common to all arms
+and does not expose prior code, so the memory comparison is unchanged, but
+absolute success rates are not comparable to a run without it.
+
+\paragraph{Excluded attempts and incidents.} Before the final configuration,
+three partial attempts were discarded and are committed separately: one run
+under the published protocol (the layout problem above), one under a 32k
+context and five under a 64k context. The latter two were stopped because the
+server's logs showed prompts being truncated once repair loops grew; truncated
+prompts silently corrupt results. The main campaign used one configuration
+throughout; its largest single call (prompt plus output) was \NPeakCallTokens{}
+tokens, well inside the 131{,}072-token window, so no prompt could have been
+truncated. One run was interrupted by an
+unplanned machine restart and was rerun from scratch with the same seed
+(\NInfraReruns{} infrastructure rerun, as the registered rerun rule
+prescribes), and the campaign was once suspended for two hours with no loss of
+state. The registered no-peeking rule was not fully observed: during the
+campaign, progress checks displayed per-run pass counts and event counts. No
+scoring rule or configuration was changed after any such check; the
+analysis ran once, automatically, after the last run.
+
+\paragraph{Isolation.} An automated leak check over every logged prompt of all
+\NLeakRuns{} runs found \NLeakHits{} occurrences of hidden-oracle content, and
+a separation-of-powers scan of all \NSepGovRuns{} governed runs found
+\NSepGovHits{} violations.
+
+\paragraph{Statistics.} Inference was out of scope in the registration, so all
+tests here are exploratory. For each per-run endpoint we report bootstrap 95\%
+confidence intervals (10{,}000 resamples, fixed seed), a Kruskal--Wallis test
+across arms, and two-sided Mann--Whitney tests in two families: each ledgered
+arm against A, and all pairs of ledgered arms. Each family is Holm-corrected,
+and we report Cliff's $\delta$ as the effect size.
+
+\section{Results}
+\label{sec:results}
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lrrrrrrr}
+\toprule
+Arm & M1@T24 & per-task M1 & own verdict & H1-trap & H1-rewrite & coerced & ktok/run \\
+\midrule
+A (summary)         & \NMOneTwentyFourA & \NMOnePassA & \NVerdictPassA & \NTrapA & \NRewriteA & \NCoercedA & \NKtokA \\
+B (append-only)     & \NMOneTwentyFourB & \NMOnePassB & \NVerdictPassB & \NTrapB & \NRewriteB & \NCoercedB & \NKtokB \\
+C (governed)        & \NMOneTwentyFourC & \NMOnePassC & \NVerdictPassC & \NTrapC & \NRewriteC & \NCoercedC & \NKtokC \\
+C+ (gov.\ + docket) & \NMOneTwentyFourCplus & \NMOnePassCplus & \NVerdictPassCplus & \NTrapCplus & \NRewriteCplus & \NCoercedCplus & \NKtokCplus \\
+D (gov.\ + voice)   & \NMOneTwentyFourD & \NMOnePassD & \NVerdictPassD & \NTrapD & \NRewriteD & \NCoercedD & \NKtokD \\
+\bottomrule
+\end{tabular}
+\caption{Main results, \NSeedsPerArm{} runs per arm. M1@T24 and per-task M1
+are hidden-oracle measures (means); ``own verdict'' is the pass rate under each
+arm's own verification and is \emph{not} comparable across arms, because each
+arm verifies against different tests. H1 columns are totals over all runs on
+primary requirements under the frozen rules; coerced violations are excluded
+from H1-rewrite and listed separately. ktok/run is generator, summary and
+judge tokens (input + output) per run.}
+\label{tab:main}
+\end{table}
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lccccc}
+\toprule
+ & \multicolumn{4}{c}{vs.\ Arm A (Holm $p$, Cliff's $\delta$)} & KW $p$ \\
+\cmidrule(lr){2-5}
+Endpoint (per run) & B & C & C+ & D & \\
+\midrule
+M1@T24 & \NStMOneTwentyFourBvsAPHolm{} (\NStMOneTwentyFourBvsADelta) & \NStMOneTwentyFourCvsAPHolm{} (\NStMOneTwentyFourCvsADelta) & \NStMOneTwentyFourCplusvsAPHolm{} (\NStMOneTwentyFourCplusvsADelta) & \NStMOneTwentyFourDvsAPHolm{} (\NStMOneTwentyFourDvsADelta) & \NStMOneTwentyFourKwP \\
+Per-task M1 & \NStMOnePassBvsAPHolm{} (\NStMOnePassBvsADelta) & \NStMOnePassCvsAPHolm{} (\NStMOnePassCvsADelta) & \NStMOnePassCplusvsAPHolm{} (\NStMOnePassCplusvsADelta) & \NStMOnePassDvsAPHolm{} (\NStMOnePassDvsADelta) & \NStMOnePassKwP \\
+Regressions (M2) & \NStRegressionsBvsAPHolm{} (\NStRegressionsBvsADelta) & \NStRegressionsCvsAPHolm{} (\NStRegressionsCvsADelta) & \NStRegressionsCplusvsAPHolm{} (\NStRegressionsCplusvsADelta) & \NStRegressionsDvsAPHolm{} (\NStRegressionsDvsADelta) & \NStRegressionsKwP \\
+H1 (frozen rules) & \NStHOneBvsAPHolm{} (\NStHOneBvsADelta) & \NStHOneCvsAPHolm{} (\NStHOneCvsADelta) & \NStHOneCplusvsAPHolm{} (\NStHOneCplusvsADelta) & \NStHOneDvsAPHolm{} (\NStHOneDvsADelta) & \NStHOneKwP \\
+H1 incl.\ coerced & \NStHOneInclCoercedBvsAPHolm{} (\NStHOneInclCoercedBvsADelta) & \NStHOneInclCoercedCvsAPHolm{} (\NStHOneInclCoercedCvsADelta) & \NStHOneInclCoercedCplusvsAPHolm{} (\NStHOneInclCoercedCplusvsADelta) & \NStHOneInclCoercedDvsAPHolm{} (\NStHOneInclCoercedDvsADelta) & \NStHOneInclCoercedKwP \\
+Tokens & \NStKtokBvsAPHolm{} (\NStKtokBvsADelta) & \NStKtokCvsAPHolm{} (\NStKtokCvsADelta) & \NStKtokCplusvsAPHolm{} (\NStKtokCplusvsADelta) & \NStKtokDvsAPHolm{} (\NStKtokDvsADelta) & \NStKtokKwP \\
+\bottomrule
+\end{tabular}
+\caption{Exploratory tests, $n=\NSeedsPerArm$ per arm. Cliff's $\delta>0$ means
+the ledgered arm's values tend to be larger than Arm~A's. H1 counts are per-run
+trap plus rewrite violations on primary requirements.}
+\label{tab:stats}
+\end{table}
+
+\paragraph{The primary endpoint does not separate the arms.} Cumulative
+success at T24 ranges from \NMOneTwentyFourD{} (D) to \NMOneTwentyFourB{} (B)
+with standard deviations of \NMOneTwentyFourSdB--\NMOneTwentyFourSdCplus{}
+across runs; no comparison is significant (smallest Holm-corrected $p$ against
+Arm~A: \NStMOneTwentyFourBvsAPHolm; Table~\ref{tab:stats}).
+The end state of a 24-task run is dominated by whether, and when, a run's
+workspace broke and recovered, and that varies more between seeds than between
+arms. With \NSeedsPerArm{} seeds this endpoint is underpowered for effects of
+the size we observe.
+
+\paragraph{Ledgers make the correct change more often.} Judged by each task's
+own hidden oracle, every ledgered arm beats the baseline (\NMOnePassD--\NMOnePassC{}
+versus \NMOnePassA; all four Holm-corrected comparisons significant, $\delta$
+between \NStMOnePassDvsADelta{} and \NStMOnePassCvsADelta). No pair of ledgered
+arms differs. Replaying earlier requirements' tests gives the agent concrete
+feedback that a summary does not.
+
+\paragraph{Ledgers prevent requirement violations.} Arm~A commits \NTrapA{}
+trap-channel and \NRewriteA{} rewrite-channel violations of primary
+requirements across its \NSeedsPerArm{} runs, concentrated on insertion order
+(\NHOneRTwoOrderA), pipe safety (\NHOneROneTwoPipesafetyA) and exit codes
+(\NHOneROneOneExitcodesA). Every ledgered arm commits significantly fewer per
+run, whether or not coerced violations are counted (Table~\ref{tab:stats}).
+Counting all violations (the ``incl.\ coerced'' row), the four ledgered arms
+are statistically indistinguishable from one another (all pairwise Holm
+$p=1$), at roughly a third to a half of the baseline's per-run rate. Under the
+frozen rules, Arm~B records zero violations and significantly fewer than every
+governed arm, but Section~\ref{sec:coercion} shows that this difference is
+produced by the coercion rule rather than by B's behaviour.
+
+\paragraph{The plain ledger is expensive; governance recovers a third.} Arm~B
+uses \NKtokB{}k tokens per run, $\NTokRatioBA\times$ Arm~A's \NKtokA{}k, and
+takes \NWallMinB{} minutes per run against \NWallMinA. Its ledger also rejects
+correct work: \NMFourLocalB{} repair iterations passed the hidden oracles (on
+the current task, with no newly broken earlier task) but failed ledger replay,
+\NMFourLocalBFromTFourteen{} of them at T14 or later, and B's own verdict
+passes only \NVerdictPassB{} of tasks although its per-task oracle pass rate is
+\NMOnePassB. The governed arms cost \NTokPctOfBC\%, \NTokPctOfBCplus\% and
+\NTokPctOfBD\% of B's tokens (C, C+, D) with indistinguishable correctness and
+violation rates, and block fewer correct iterations (\NMFourLocalC,
+\NMFourLocalCplus, \NMFourLocalD). Retiring what evidence shows to be stale is
+what buys this back.
+
+\subsection{Coercion decides the plain ledger's H1 record}
+\label{sec:coercion}
+
+The frozen coercion rule excludes a violation when the repair feedback at that
+task contained a failing evidence-invalidated assertion. In Arm~B such
+assertions are never removed, so after the first regime change nearly every
+failing repair loop contains one. Apart from the T24 conflict, which is scored
+separately, every primary violation B committed (\NCoercedB{}) was excluded on
+this ground: \NTrapInclCoercedB{} at trap tasks and
+\NRewriteInclCoercedB{} elsewhere. In the governed arms evidence-invalidated
+assertions are retired, and the rule never fired. The rule's rationale is
+sound: an agent forced to satisfy a contradictory stale test is not
+\emph{forgetting} a requirement. But it means B's zeros say ``B's violations
+happened under stale-test pressure,'' not ``B never violated.'' Re-scoring with
+coerced violations restored to their channel, B's counts (\NTrapInclCoercedB{}
+trap, \NRewriteInclCoercedB{} rewrite) exceed both pre-registered thresholds
+(\NTrapThreshold{} and \NRewriteThreshold), and B no longer differs from the
+governed arms.
+
+\subsection{Governance activity}
+
+Evidence-triggered retirement worked as designed: at T6 every governed run
+retired the JSON-storage assertions (C, C+, D: \NEOneC, \NEOneCplus{} and
+\NEOneD{} of \NSeedsPerArm{} runs), at T14 every governed run retired the
+schema assertion A6 (\NETwoASixC, \NETwoASixCplus{} and \NETwoASixD{} of
+\NSeedsPerArm{} runs), and the other T14-stale assertion A10 was gone by T14 in every
+governed run, often already retired earlier through a conflict escalation. The
+admission-time conflict check was very active (\NEscalationsC, \NEscalationsCplus{}
+and \NEscalationsD{} escalations in C, C+ and D) and the judge mostly retained
+the older assertion (\NRetainC, \NRetainCplus{} and \NRetainD{} retain against
+\NSupersedeC, \NSupersedeCplus{} and \NSupersedeD{} supersede verdicts, all
+routes). The telemetry docket opened \NDocketCplus{} reviews in C+, including
+the planted A11f in all \NPlantDocketedCplus{} runs, but the judge retired A11f
+through the docket in only \NPlantTelemetryDocketCplus. The generator voice in
+Arm~D was almost unused: \NRetireReqD{} retirement requests in
+\NSeedsPerArm{} runs, \NRetireKnownD{} of which named an active assertion, and
+the judge refused it, so capture was \NCaptureD.
+
+\section{Pre-registered scorecard}
+\label{sec:scorecard}
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{>{\raggedright\arraybackslash}p{5.6cm}>{\raggedright\arraybackslash}p{4.6cm}>{\raggedright\arraybackslash}p{3.2cm}}
+\toprule
+Pre-registered prediction & Observed & Verdict \\
+\midrule
+H1-trap: B, C, C+, D $\le$ A/3 (A = \NTrapA, threshold \NTrapThreshold) &
+B \NTrapB, C \NTrapC, C+ \NTrapCplus, D \NTrapD &
+B, C confirmed; C+, D refuted \\
+H1-rewrite: B, C, C+, D $\le$ A/3 (A = \NRewriteA, threshold \NRewriteThreshold) &
+B \NRewriteB, C \NRewriteC, C+ \NRewriteCplus, D \NRewriteD &
+confirmed for all four \\
+\quad sensitivity, coerced restored (not registered) &
+B \NTrapInclCoercedB{} / \NRewriteInclCoercedB &
+B refuted on both \\
+R10 violations are contract-grade & \NContractGradeA{} of \NHOneROneZeroAtomicA{} in A; none elsewhere & confirmed (\NVerdictROneZeroViolationsAllContractGrade) \\
+Coercion fires only in B & B \NCoercedB, others 0 & confirmed \\
+Plant A11f: C retains it in every run & retained in \NPlantRetainedC{} of \NSeedsPerArm; \NPlantConflictC{} retired via conflict escalation & refuted \\
+Plant A11f: C+ dockets it & docketed in \NPlantDocketedCplus{} of \NSeedsPerArm, retired via docket in \NPlantTelemetryDocketCplus & confirmed (docketing) \\
+D capture $>0$; C capture $=0$ & D \NCaptureD, C \NCaptureC & D refuted; C confirmed \\
+D late regressions (T19--T24) $\ge$ C & D \NLateRegressD, C \NLateRegressC & confirmed \\
+T14: stale A6/A10 block valid work in B & \NMFourLocalBFromTFourteen{} blocked iterations at T14+ & confirmed \\
+T14: C-family retires A6 and A10 & A6 retired at T14 in all governed runs; A10 gone by T14 in all & confirmed \\
+T20: vestigial code B $>$ C-family $>$ A & \NVestigialPctB\% / \NVestigialPctD--\NVestigialPctC\% / \NVestigialPctA\% of commits & undiscriminating (ceiling) \\
+T24: B thrashes & \NTTwentyFourThrashB{} of \NSeedsPerArm{} B runs exhaust the budget & confirmed \\
+T24: C-family escalates the conflict & C \NTTwentyFourEscC, C+ \NTTwentyFourEscCplus, D \NTTwentyFourEscD{} of \NSeedsPerArm{} & partially \\
+\bottomrule
+\end{tabular}
+\caption{Every pre-registered prediction against the observed data. The
+sensitivity row is not part of the registration.}
+\label{tab:scorecard}
+\end{table}
+
+Table~\ref{tab:scorecard} lists every frozen prediction. Three deserve comment.
+
+\paragraph{The amendment-capable arms leak at the traps.} C+ and D exceed the
+H1-trap threshold (\NTrapCplus{} and \NTrapD{} against \NTrapThreshold), while C
+meets it exactly. In C+ the excess is mostly silent success at its trap
+(\NTrapOnRNineSilenceCplus{} of \NTrapCplus); in D it is mostly pipe safety
+(\NTrapOnROneTwoPipesafetyD{} of \NTrapD). Away from the traps, pipe safety is
+also the requirement the governed arms violate most (\NHOneROneTwoPipesafetyC,
+\NHOneROneTwoPipesafetyCplus{} and \NHOneROneTwoPipesafetyD{} trap-plus-rewrite
+violations in C, C+ and D). These arms differ from C only in their amendment
+channels, so the observation is consistent with the mechanism registered for
+this study, that every retirement takes down a guard. But the differences
+between C, C+ and D are not significant (Table~\ref{tab:stats} reports no
+difference among ledgered arms), so we read this as a direction to test with
+more seeds, not as an established effect.
+
+\paragraph{The plant was retired by the conflict path, not kept.} We predicted
+that C would keep A11f forever, because no evidence artifact can flag an
+assertion with empty assumptions. Instead, the admission-time conflict check
+escalated A11f when a later task's assertions passed while it failed, and the
+judge retired it in \NPlantConflictC{} of \NSeedsPerArm{} C runs. The
+prediction overlooked a second, evidence-free retirement route that the design
+itself contains.
+
+\paragraph{Capture did not occur.} The registered capture test depends on the
+agent using its voice; this model almost never did. The result is a null
+about this model's propensity to lobby, not evidence that the channel is
+safe.
+
+\section{Threats to validity and limitations}
+
+\begin{enumerate}
+\item \textbf{One model, quantized, local.} All runs use one 4-bit quantized
+open-weight model with an 8-bit key--value cache. Results may differ for other
+models, precisions or serving stacks. The registered study named a different
+hosted model; this is a re-execution, not a replication of reported numbers.
+\item \textbf{Protocol deviation.} The layout flag changes what the agent is
+told, identically for all arms. Absolute success rates depend on it.
+\item \textbf{Underpowered primary endpoint.} Twelve seeds per arm cannot
+detect between-arm differences in M1@T24 of the size observed, given the
+between-seed variance.
+\item \textbf{Exploratory statistics.} The registration placed inference out
+of scope; the tests reported here were chosen after the data were collected,
+although they are standard and applied uniformly to every endpoint.
+\item \textbf{Monitoring during the campaign.} Pass counts were viewed while
+runs were in progress, contrary to the registered no-peeking rule. No rule or
+configuration was changed afterwards, which the repository history shows.
+\item \textbf{Non-reproducible sampling.} Seeds are not passed to the model
+server, so reruns will differ; the logs are the evidence.
+\item \textbf{One project, one sequence.} \texttt{taskcli} is small by design;
+generalization to other codebases and change patterns is untested.
+\item \textbf{Shared base model.} The judge and generator are separate
+conversations with the same model.
+\end{enumerate}
+
+\section{Data and code availability}
+\label{sec:availability}
+
+The repository contains the frozen sequence and oracles, the harness, every
+main-campaign run (log, ledger, supersessions and the workspace's full git
+history) as per-arm archives, the excluded attempts as separate archives, the
+launcher logs, \texttt{results/metrics.csv} and
+\texttt{results/h1\_events.csv}, and \texttt{results/isolation\_checks.csv}.
+After unpacking the archives, \texttt{python -m harness.analyze} regenerates
+the metrics files byte-for-byte and \texttt{python -m harness.paper\_numbers
+--isolation} regenerates every number in this paper, writing the macro file
+this paper includes and a claims table that maps each number to its source.
+
+\section{Conclusion}
+
+Run on a local open-weight model with every log public, executable requirement
+ledgers make an LLM coding agent produce the correct change more often and
+violate earlier requirements roughly half as often as a summary-only memory.
+The plain append-only ledger pays for this with $\NTokRatioBA\times$ the tokens
+and with valid work rejected by stale tests, and its apparent perfection on the
+violation measures is produced by a scoring rule that excludes violations
+committed under stale-test pressure. Evidence-governed retirement keeps the
+protection at about \NTokPctOfBC\% of the plain ledger's cost. Differences
+among the ledgered variants, and every comparison on the end-state primary
+endpoint, are within seed variance at this sample size.
+
+\paragraph{AI assistance.} The analysis scripts and a draft of this manuscript
+were prepared with the help of an AI assistant (Claude, Anthropic). The author
+reviewed and is responsible for all content.
+
+\begin{thebibliography}{99}
+\bibitem{swebench}
+C.~E. Jimenez, J.~Yang, A.~Wettig, S.~Yao, K.~Pei, O.~Press, and
+K.~Narasimhan.
+\newblock SWE-bench: Can language models resolve real-world GitHub issues?
+\newblock In \emph{ICLR}, 2024.
+
+\bibitem{generativeagents}
+J.~S. Park, J.~C. O'Brien, C.~J. Cai, M.~R. Morris, P.~Liang, and
+M.~S. Bernstein.
+\newblock Generative agents: Interactive simulacra of human behavior.
+\newblock In \emph{UIST}, 2023.
+
+\bibitem{memgpt}
+C.~Packer, S.~Wooders, K.~Lin, V.~Fang, S.~G. Patil, I.~Stoica, and
+J.~E. Gonzalez.
+\newblock MemGPT: Towards LLMs as operating systems.
+\newblock \emph{arXiv:2310.08560}, 2023.
+
+\bibitem{reflexion}
+N.~Shinn, F.~Cassano, A.~Gopinath, K.~Narasimhan, and S.~Yao.
+\newblock Reflexion: Language agents with verbal reinforcement learning.
+\newblock In \emph{NeurIPS}, 2023.
+
+\bibitem{locomo}
+A.~Maharana, D.-H. Lee, S.~Tulyakov, M.~Bansal, F.~Barbieri, and Y.~Fang.
+\newblock Evaluating very long-term conversational memory of LLM agents.
+\newblock In \emph{ACL}, 2024.
+
+\bibitem{lostinmiddle}
+N.~F. Liu, K.~Lin, J.~Hewitt, A.~Paranjape, M.~Bevilacqua, F.~Petroni, and
+P.~Liang.
+\newblock Lost in the middle: How language models use long contexts.
+\newblock \emph{TACL}, 12, 2024.
+
+\bibitem{hage2026}
+D.~Jiang, Y.~Li, G.~Li, Q.~Li, and B.~Li.
+\newblock HAGE: Harnessing agentic memory via RL-driven weighted graph
+evolution.
+\newblock \emph{arXiv:2605.09942}, 2026.
+
+\bibitem{yooharman}
+S.~Yoo and M.~Harman.
+\newblock Regression testing minimization, selection and prioritization: a
+survey.
+\newblock \emph{Software Testing, Verification and Reliability}, 22(2), 2012.
+
+\bibitem{gotel}
+O.~C.~Z. Gotel and A.~C.~W. Finkelstein.
+\newblock An analysis of the requirements traceability problem.
+\newblock In \emph{Proc.\ IEEE International Conference on Requirements
+Engineering}, 1994.
+
+\bibitem{reassert}
+B.~Daniel, V.~Jagannath, D.~Dig, and D.~Marinov.
+\newblock ReAssert: Suggesting repairs for broken unit tests.
+\newblock In \emph{ASE}, 2009.
+
+\bibitem{beck}
+K.~Beck.
+\newblock \emph{Test-Driven Development: By Example}.
+\newblock Addison-Wesley, 2002.
+
+\bibitem{amodei}
+D.~Amodei, C.~Olah, J.~Steinhardt, P.~Christiano, J.~Schulman, and D.~Man\'e.
+\newblock Concrete problems in AI safety.
+\newblock \emph{arXiv:1606.06565}, 2016.
+
+\bibitem{nosek}
+B.~A. Nosek, C.~R. Ebersole, A.~C. DeHaven, and D.~T. Mellor.
+\newblock The preregistration revolution.
+\newblock \emph{PNAS}, 115(11), 2018.
+
+\bibitem{qwen3}
+Qwen Team.
+\newblock Qwen3 technical report.
+\newblock \emph{arXiv:2505.09388}, 2025.
+\end{thebibliography}
+
+\end{document}

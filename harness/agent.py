@@ -139,6 +139,57 @@ class RealSolver:
         return text
 
 
+class OpenAICompatibleSolver:
+    """Calls any OpenAI-compatible /v1/chat/completions endpoint — a local
+    Qwen (or other) model served through Ollama, vLLM, or LM Studio. Same
+    prompts, <file>-block parsing, and logging as RealSolver; only the
+    transport differs. The Anthropic-style top-level `system` prompt is
+    mapped to a leading system message, which the OpenAI chat schema expects;
+    the user/assistant `messages` already match that schema unchanged."""
+
+    def __init__(self, logger):
+        import openai  # local import: only the openai backend needs the package
+
+        api_key = os.environ.get(config.OPENAI_API_KEY_ENV_VAR) or "not-needed"
+        self.client = openai.OpenAI(api_key=api_key, base_url=config.OPENAI_BASE_URL)
+        self.logger = logger
+
+    def _create(self, system_prompt: str, messages: list, max_tokens: int):
+        chat_messages = [{"role": "system", "content": system_prompt}] + messages
+        response = self.client.chat.completions.create(
+            model=config.MODEL,
+            max_tokens=max_tokens,
+            temperature=config.TEMPERATURE,
+            messages=chat_messages,
+        )
+        text = response.choices[0].message.content or ""
+        if response.usage is not None:
+            usage = {
+                "input_tokens": response.usage.prompt_tokens,
+                "output_tokens": response.usage.completion_tokens,
+            }
+            # Full provider usage so accounting matches the server's report.
+            try:
+                usage["provider_raw"] = response.usage.model_dump()
+            except Exception:
+                pass
+        else:
+            usage = {"input_tokens": 0, "output_tokens": 0}
+        return text, usage
+
+    def call(self, system_prompt: str, messages: list, task_id: str, iteration: int) -> str:
+        text, usage = self._create(system_prompt, messages, config.MAX_TOKENS)
+        prompt_full = _serialize_prompt(system_prompt, messages)
+        self.logger.log_api_call(task_id, iteration, prompt_full, text, usage)
+        return text
+
+    def call_summary(self, system_prompt: str, messages: list, session_boundary_after: str) -> str:
+        text, usage = self._create(system_prompt, messages, config.ARM_A_SUMMARY_MAX_TOKENS)
+        prompt_full = _serialize_prompt(system_prompt, messages)
+        self.logger.log_summary_call(session_boundary_after, prompt_full, text, usage)
+        return text
+
+
 class DryRunSolver:
     """Replaces the API with a canned, hand-written correct solution per
     task, read from harness/fixtures/<task_id>.txt. Used by --dry-run.

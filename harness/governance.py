@@ -209,6 +209,47 @@ class RealJudge:
         return verdict, reason
 
 
+class OpenAICompatibleJudge(RealJudge):
+    """Judge over an OpenAI-compatible endpoint (a local Qwen etc.). Inherits
+    RealJudge's review/re-ask/logging logic unchanged and overrides only the
+    transport, so the judge runs on the same local model as the generator
+    (recorded in the run log), exactly as the Anthropic backend pairs them.
+    The Anthropic-style top-level system prompt maps to a leading system
+    message for the OpenAI chat schema."""
+
+    def __init__(self, logger):
+        import openai
+        import os
+
+        api_key = os.environ.get(config.OPENAI_API_KEY_ENV_VAR) or "not-needed"
+        self.client = openai.OpenAI(api_key=api_key, base_url=config.OPENAI_BASE_URL)
+        self.logger = logger
+
+    def _call(self, prompt: str):
+        response = self.client.chat.completions.create(
+            model=config.MODEL,
+            max_tokens=config.MAX_TOKENS,
+            temperature=config.TEMPERATURE,
+            messages=[
+                {"role": "system", "content": JUDGE_SYSTEM_PROMPT},
+                {"role": "user", "content": prompt},
+            ],
+        )
+        text = response.choices[0].message.content or ""
+        if response.usage is not None:
+            usage = {
+                "input_tokens": response.usage.prompt_tokens,
+                "output_tokens": response.usage.completion_tokens,
+            }
+            try:
+                usage["provider_raw"] = response.usage.model_dump()
+            except Exception:
+                pass
+        else:
+            usage = {"input_tokens": 0, "output_tokens": 0}
+        return text, usage
+
+
 class DryRunJudge:
     """Canned judge for --dry-run: supersedes anything flagged by evidence,
     retains on conflict escalation. Validates the governance plumbing
@@ -233,6 +274,17 @@ class DryRunJudge:
             "verdict": verdict, "reason": reason, "reasked": False,
         })
         return verdict, reason
+
+
+def make_judge(logger, dry_run: bool):
+    """Pick the governance judge to match run_pilot.make_solver: the canned
+    judge for --dry-run, otherwise config.BACKEND selects the Anthropic
+    Messages API or an OpenAI-compatible endpoint (e.g. a local Qwen)."""
+    if dry_run:
+        return DryRunJudge(logger)
+    if config.BACKEND == "openai":
+        return OpenAICompatibleJudge(logger)
+    return RealJudge(logger)
 
 
 def record_supersession(run_dir: Path, assertion_id: str, evidence_id: str,

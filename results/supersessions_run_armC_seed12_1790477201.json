@@ -1,0 +1,65 @@
+[
+  {
+    "assertion_id": "A1",
+    "evidence_id": "E1",
+    "task": "T6",
+    "reason": "The assertion assumes storage is a JSON file, which is no longer true after the regime change at T6 where storage moved to SQLite.",
+    "timestamp": 1790477336.0188549
+  },
+  {
+    "assertion_id": "A3",
+    "evidence_id": "E1",
+    "task": "T6",
+    "reason": "The assertion assumes storage is a JSON file, but the regime change at T6 migrated storage to SQLite, making the assumption invalid.",
+    "timestamp": 1790477336.5161788
+  },
+  {
+    "assertion_id": "A4",
+    "evidence_id": "E1",
+    "task": "T6",
+    "reason": "The assertion assumes storage is a JSON file, but the regime change at T6 migrated storage to SQLite, making `tasks.json` inaccessible and causing the test to fail.",
+    "timestamp": 1790477337.058038
+  },
+  {
+    "assertion_id": "A10",
+    "evidence_id": "conflict",
+    "task": "T13",
+    "reason": "The older assertion A10 assumes the system uses SQLite storage with a tasks_table schema, but the newly admitted assertion A13 uses a JSON array export format, indicating a change in the underlying requirements regime that invalidates the assumptions of the older assertion.",
+    "timestamp": 1790478164.848505
+  },
+  {
+    "assertion_id": "A6",
+    "evidence_id": "E2",
+    "task": "T14",
+    "reason": "The assertion's probing method assumes the existence of a `tasks` table, which was invalidated by the schema change at T14 that migrated tasks to an `items` table.",
+    "timestamp": 1790478166.2442508
+  },
+  {
+    "assertion_id": "A14",
+    "evidence_id": "conflict",
+    "task": "T16",
+    "reason": "The older assertion assumes a schema with an \"items\" table and absence of a \"tasks\" table, but the evidence shows the requirements regime has changed to use a different storage structure that likely retains or redefines the \"tasks\" table.",
+    "timestamp": 1790478740.626823
+  },
+  {
+    "assertion_id": "A11f",
+    "evidence_id": "conflict",
+    "task": "T17",
+    "reason": "The older assertion A11f incorrectly assumes error messages must start with \"error: \", while the evidence shows the requirement only mandates errors go to stderr with a contracted exit code, making the assertion invalid under the updated regime.",
+    "timestamp": 1790479017.673267
+  },
+  {
+    "assertion_id": "A5",
+    "evidence_id": "E3",
+    "task": "T20",
+    "reason": "The assertion's probing method assumes the environment variable configuration mechanism is valid, but the evidence shows this mechanism was deprecated at T20 in favor of config.toml, making the assumption invalid even if the underlying requirement remains valid.",
+    "timestamp": 1790479695.008367
+  },
+  {
+    "assertion_id": "A20",
+    "evidence_id": "conflict",
+    "task": "T23",
+    "reason": "The older assertion A20 assumes a TOML configuration format (config: toml), but evidence shows the requirements regime now uses a different configuration mechanism that invalidates this assumption.",
+    "timestamp": 1790481403.718115
+  }
+]

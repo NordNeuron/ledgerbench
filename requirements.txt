@@ -2,6 +2,10 @@
 # The anthropic 1.x client API used here (client.messages.create + response
 # .content text blocks) is the same surface as the 0.40 line the spec cites.
 anthropic==1.5.0
+# Only needed for LEDGERBENCH_BACKEND=openai (a local OpenAI-compatible
+# endpoint such as Ollama/vLLM/LM Studio serving Qwen). The chat-completions
+# surface used here (client.chat.completions.create) is stable across 1.x-3.x.
+openai>=1.40
 pytest==9.1.1
 pyyaml==6.0.3
 matplotlib==3.11.2

@@ -29,6 +29,22 @@ def _oracle_events(run_dir: Path, records: list) -> list:
     return [r for r in records if r.get("event") == "oracle"]
 
 
+def _portable(path: Path) -> str:
+    """Repo-relative path when possible, so committed CSVs carry no
+    machine-specific prefix and regenerate byte-identically elsewhere."""
+    try:
+        return Path(path).resolve().relative_to(config.ROOT_DIR).as_posix()
+    except ValueError:
+        return str(path)
+
+
+def _assertion_path(recorded: str) -> Path:
+    """Ledger entries record the absolute assertion path of the machine that
+    ran them; fall back to the same file in this checkout's frozen sequence."""
+    p = Path(recorded)
+    return p if p.exists() else config.ASSERTIONS_DIR / p.name
+
+
 def compute_metrics_for_run(run_dir: Path) -> dict:
     records = read_log(run_dir)
     start = next(r for r in records if r.get("event") == "run_start")
@@ -174,7 +190,7 @@ def compute_metrics_for_run(run_dir: Path) -> dict:
     return {
         "arm_verdict": arm_verdict,
         "task_order": task_order,
-        "run_dir": str(run_dir),
+        "run_dir": _portable(run_dir),
         "arm": arm,
         "seed": seed,
         "m1_per_task": m1_per_task,
@@ -512,7 +528,7 @@ def separation_check(run_dir: Path) -> int:
     file_by_id = {}
     if ledger_path.exists():
         for e in json.loads(ledger_path.read_text(encoding="utf-8")):
-            file_by_id[e["meta"]["id"]] = e["assertion_file"]
+            file_by_id[e["meta"]["id"]] = _assertion_path(e["assertion_file"])
 
     # Chunks shared with OTHER promptable content prove nothing about
     # leakage: assertion files share pytest boilerplate with the active

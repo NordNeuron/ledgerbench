@@ -1,0 +1,51 @@
+[
+  {
+    "assertion_id": "A1",
+    "evidence_id": "E1",
+    "task": "T6",
+    "reason": "The assertion assumes storage is a JSON file, but the regime change at T6 migrated storage to SQLite, making the assumption false.",
+    "timestamp": 1790521120.998646
+  },
+  {
+    "assertion_id": "A3",
+    "evidence_id": "E1",
+    "task": "T6",
+    "reason": "The assertion assumes storage is a JSON file, but the regime change at T6 migrated storage to SQLite, making the assumption invalid.",
+    "timestamp": 1790521121.488698
+  },
+  {
+    "assertion_id": "A4",
+    "evidence_id": "E1",
+    "task": "T6",
+    "reason": "The assertion assumes storage is in a JSON file, but the regime change at T6 migrated storage to SQLite, making `tasks.json` inaccessible and causing the test to fail.",
+    "timestamp": 1790521122.0428889
+  },
+  {
+    "assertion_id": "A6",
+    "evidence_id": "E2",
+    "task": "T14",
+    "reason": "The assertion's probing method assumes the existence of the `tasks` table, which no longer exists after the schema change at T14.",
+    "timestamp": 1790521991.7347991
+  },
+  {
+    "assertion_id": "A10",
+    "evidence_id": "E2",
+    "task": "T14",
+    "reason": "The assertion's probing method assumes the existence of a `tasks` table, which the evidence shows no longer exists in the schema after T14.",
+    "timestamp": 1790521992.224422
+  },
+  {
+    "assertion_id": "A5",
+    "evidence_id": "E3",
+    "task": "T20",
+    "reason": "The assertion's probing method assumes the environment variable configuration mechanism is still supported, but the new requirement explicitly states that config.toml takes precedence over the deprecated TASKCLI_TODAY environment variable, making the environment variable approach invalid under the updated regime.",
+    "timestamp": 1790523589.995171
+  },
+  {
+    "assertion_id": "A20",
+    "evidence_id": "conflict",
+    "task": "T23",
+    "reason": "The older assertion A20 assumes a TOML configuration format (config: toml), but evidence shows the requirements regime has changed to use a different configuration mechanism, invalidating the assumption.",
+    "timestamp": 1790525674.5076249
+  }
+]

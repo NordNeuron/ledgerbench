@@ -1,0 +1,58 @@
+[
+  {
+    "assertion_id": "A1",
+    "evidence_id": "E1",
+    "task": "T6",
+    "reason": "The assertion assumes storage is a JSON file, which is invalidated by the regime change that migrated storage to SQLite.",
+    "timestamp": 1790451662.6278799
+  },
+  {
+    "assertion_id": "A3",
+    "evidence_id": "E1",
+    "task": "T6",
+    "reason": "The assertion assumes storage is a JSON file, but the regime change at T6 migrated storage to SQLite, making the assumption invalid.",
+    "timestamp": 1790451663.129266
+  },
+  {
+    "assertion_id": "A4",
+    "evidence_id": "E1",
+    "task": "T6",
+    "reason": "The assertion assumes storage is a JSON file, but the regime change at T6 migrated storage to SQLite, making `tasks.json` inaccessible and causing the test to fail.",
+    "timestamp": 1790451663.669557
+  },
+  {
+    "assertion_id": "A6",
+    "evidence_id": "E2",
+    "task": "T14",
+    "reason": "The assertion's probing method assumes the existence of a `tasks` table, which was invalidated by the schema change at T14 that introduced the `items` table.",
+    "timestamp": 1790452447.747633
+  },
+  {
+    "assertion_id": "A10",
+    "evidence_id": "E2",
+    "task": "T14",
+    "reason": "The assertion's probing method assumes the existence of a `tasks` table, which the evidence shows no longer exists in the schema after T14.",
+    "timestamp": 1790452448.2404249
+  },
+  {
+    "assertion_id": "A5",
+    "evidence_id": "conflict",
+    "task": "T16",
+    "reason": "The older assertion A5 assumes configuration via environment variables (`env_vars`), but the newly admitted assertion shows that the system now operates under a different configuration regime where environment variables are not used for task CLI operations, invalidating the assumption upon which A5's test logic depends.",
+    "timestamp": 1790453002.4314399
+  },
+  {
+    "assertion_id": "A13",
+    "evidence_id": "conflict",
+    "task": "T16",
+    "reason": "The older assertion A13 assumes export_format is \"json_array\", but the newly admitted assertion T16 shows that tag-based filtering works, implying the export format may have changed to support different formats, invalidating the assumption.",
+    "timestamp": 1790453005.349163
+  },
+  {
+    "assertion_id": "A11f",
+    "evidence_id": "conflict",
+    "task": "T17",
+    "reason": "The older assertion A11f incorrectly assumes error messages must start with \"error: \", while the evidence shows the requirement only mandates errors go to stderr with a contracted exit code, making the assertion invalid under the new regime.",
+    "timestamp": 1790453297.501287
+  }
+]

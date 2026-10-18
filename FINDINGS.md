@@ -1,5 +1,10 @@
 # LedgerBench Pilot Findings — Phases 0 & 0.5
 
+> **Withdrawn numbers.** The run logs behind this document's results were lost when the
+> machine holding them failed, so its numbers cannot be verified and are withdrawn. The
+> current, fully data-backed results are in `paper/ledgerbench-qwen.tex` and
+> `results/claims.md`; the frozen sequence and scoring rules are unchanged.
+
 *Draft v1 — 2026-07-03. Single project (taskcli), 8 tasks, 6 real runs +
 3 dry runs, model `deepseek-v4-flash` (DeepSeek Anthropic-compatible
 endpoint), total API spend ≈ $0.40. Full logs, per-iteration git history,

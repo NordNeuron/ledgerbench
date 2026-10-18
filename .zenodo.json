@@ -1,0 +1,23 @@
+{
+  "title": "LedgerBench: executable requirement memory for LLM coding agents under changing requirements (open-data Qwen campaign)",
+  "upload_type": "software",
+  "description": "<p>LedgerBench is a pre-registered benchmark that drives an LLM coding agent through a frozen 24-task sequence with requirement regime changes, trap tasks and a planted defective test, comparing five memory strategies (summary baseline, append-only test ledger, and three evidence-governed ledgers).</p><p>This release contains the harness, the frozen task sequence and hidden oracles, all 60 run logs of a campaign with Qwen3-Coder-30B-A3B served locally via Ollama (full prompts and responses, per-iteration workspace git history, ledgers and supersessions, in data/runs/), the excluded attempts, the analysis outputs, and the paper (paper/ledgerbench-qwen.pdf). Every number in the paper is regenerated from the committed data by <code>python -m harness.paper_numbers</code>.</p>",
+  "creators": [
+    {
+      "name": "Kumar, Pankaj",
+      "affiliation": "Independent researcher"
+    }
+  ],
+  "license": "MIT",
+  "keywords": [
+    "LLM agents",
+    "coding agents",
+    "agent memory",
+    "regression testing",
+    "requirements engineering",
+    "benchmark",
+    "pre-registration",
+    "open data"
+  ],
+  "access_right": "open"
+}

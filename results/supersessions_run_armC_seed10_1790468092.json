@@ -1,0 +1,65 @@
+[
+  {
+    "assertion_id": "A1",
+    "evidence_id": "E1",
+    "task": "T6",
+    "reason": "The assertion assumes storage is a JSON file, which was invalidated by the regime change at T6 that migrated storage to SQLite.",
+    "timestamp": 1790468183.501924
+  },
+  {
+    "assertion_id": "A3",
+    "evidence_id": "E1",
+    "task": "T6",
+    "reason": "The assertion assumes storage is a JSON file, but the regime change at T6 migrated storage to SQLite, making the assumption invalid.",
+    "timestamp": 1790468183.997975
+  },
+  {
+    "assertion_id": "A4",
+    "evidence_id": "E1",
+    "task": "T6",
+    "reason": "The assertion assumes storage is in a JSON file, but the regime change at T6 migrated storage to SQLite, making `tasks.json` inaccessible and causing the test to fail.",
+    "timestamp": 1790468184.5540538
+  },
+  {
+    "assertion_id": "A10",
+    "evidence_id": "conflict",
+    "task": "T13",
+    "reason": "The older assertion A10 assumes the system uses SQLite storage with a tasks_table schema, but the newly admitted assertion A13 uses JSON array export format, indicating a change in the underlying requirements regime that invalidates the assumptions of A10.",
+    "timestamp": 1790469083.4435499
+  },
+  {
+    "assertion_id": "A6",
+    "evidence_id": "E2",
+    "task": "T14",
+    "reason": "The assertion's probing method assumes the existence of a `tasks` table, which was invalidated by the schema change at T14 that introduced the `items` table.",
+    "timestamp": 1790469084.6599522
+  },
+  {
+    "assertion_id": "A11f",
+    "evidence_id": "conflict",
+    "task": "T15",
+    "reason": "The older assertion A11f was based on an incorrect assumption about error message formatting that has been corrected in the new requirements regime, making the assertion invalid under the current rules.",
+    "timestamp": 1790469593.0232399
+  },
+  {
+    "assertion_id": "A5",
+    "evidence_id": "E3",
+    "task": "T20",
+    "reason": "The assertion's probing method assumes the environment variable configuration mechanism is valid, but the evidence shows this mechanism was deprecated at T20 in favor of config.toml, making the assumption invalid even if the underlying requirement remains valid.",
+    "timestamp": 1790470233.4857442
+  },
+  {
+    "assertion_id": "A13",
+    "evidence_id": "conflict",
+    "task": "T22",
+    "reason": "The older assertion A13 assumes export_format is \"json_array\", but the evidence shows this assumption is no longer valid under the new requirements regime.",
+    "timestamp": 1790471429.348235
+  },
+  {
+    "assertion_id": "A20",
+    "evidence_id": "conflict",
+    "task": "T23",
+    "reason": "The older assertion A20 assumes the config format is TOML, but evidence shows the requirements regime now uses a different configuration mechanism that invalidates this assumption.",
+    "timestamp": 1790471908.624419
+  }
+]

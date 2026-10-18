@@ -1,0 +1,58 @@
+[
+  {
+    "assertion_id": "A1",
+    "evidence_id": "E1",
+    "task": "T6",
+    "reason": "The assertion assumes storage is a JSON file, which was invalidated by the regime change at T6 that migrated storage to SQLite.",
+    "timestamp": 1790447339.461976
+  },
+  {
+    "assertion_id": "A3",
+    "evidence_id": "E1",
+    "task": "T6",
+    "reason": "The assertion assumes storage is a JSON file, but the regime change at T6 migrated storage to SQLite, making the assumption invalid.",
+    "timestamp": 1790447339.9573581
+  },
+  {
+    "assertion_id": "A4",
+    "evidence_id": "E1",
+    "task": "T6",
+    "reason": "The assertion assumes storage is in a JSON file, but the regime change at T6 migrated storage to SQLite, making `tasks.json` inaccessible and causing the test to fail.",
+    "timestamp": 1790447340.5071082
+  },
+  {
+    "assertion_id": "A10",
+    "evidence_id": "conflict",
+    "task": "T13",
+    "reason": "The older assertion A10 assumes a SQLite storage backend and specific schema, but the newly admitted assertion A13 uses a JSON array export format, indicating the requirements regime has changed to favor JSON over SQLite storage.",
+    "timestamp": 1790448112.9350421
+  },
+  {
+    "assertion_id": "A6",
+    "evidence_id": "E2",
+    "task": "T14",
+    "reason": "The assertion's probing method assumes the existence of a `tasks` table, which was invalidated by the schema change at T14 that migrated tasks to an `items` table.",
+    "timestamp": 1790448113.660191
+  },
+  {
+    "assertion_id": "A11f",
+    "evidence_id": "conflict",
+    "task": "T19",
+    "reason": "The older assertion A11f incorrectly assumed that error messages must start with \"error: \", while the evidence shows that only the exit code and stderr destination are required, making the assertion invalid under the current regime.",
+    "timestamp": 1790448789.098609
+  },
+  {
+    "assertion_id": "A13",
+    "evidence_id": "conflict",
+    "task": "T19",
+    "reason": "The older assertion A13 assumes the export format is 'json_array', but evidence shows this assumption is no longer valid under the new requirements regime.",
+    "timestamp": 1790448790.414159
+  },
+  {
+    "assertion_id": "A5",
+    "evidence_id": "E3",
+    "task": "T20",
+    "reason": "The assertion's probing method assumes the environment variable configuration mechanism is valid, but the evidence shows this mechanism was deprecated at T20 in favor of config.toml, making the assumption invalid even if the underlying requirement remains valid.",
+    "timestamp": 1790448793.761857
+  }
+]
