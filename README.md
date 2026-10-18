@@ -1,5 +1,7 @@
 # LedgerBench
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23450108.svg)](https://doi.org/10.5281/zenodo.23450108)
+
 **Does an executable requirement memory help an AI coding agent when
 requirements change, or does it calcify?** LedgerBench drives one coding agent
 through a fixed, pre-registered sequence of 24 tasks on a small command-line
@@ -119,6 +121,11 @@ python -m harness.paper_numbers --isolation   # every paper number + leak/separa
 `paper_numbers` writes `results/paper_numbers.json`, the claims table
 `results/claims.md`, and `paper/numbers.tex`, the macro file the paper
 includes, so the paper cannot quote a number the data does not produce.
+
+**Archived copy:** every release is preserved on Zenodo. Cite all versions as
+[doi:10.5281/zenodo.23450108](https://doi.org/10.5281/zenodo.23450108);
+v1.0.0 specifically is
+[doi:10.5281/zenodo.23450109](https://doi.org/10.5281/zenodo.23450109).
 
 ---
 

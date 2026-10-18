@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: "If you use LedgerBench or its data, please cite it as below."
+title: "LedgerBench: executable requirement memory for LLM coding agents under changing requirements"
+authors:
+  - family-names: Kumar
+    given-names: Pankaj
+    affiliation: Independent researcher
+type: software
+license: MIT
+repository-code: "https://github.com/NordNeuron/ledgerbench"
+doi: 10.5281/zenodo.23450108
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.23450108
+    description: All versions (concept DOI)
+  - type: doi
+    value: 10.5281/zenodo.23450109
+    description: Release v1.0.0
+version: 1.0.0
+date-released: 2026-10-18
+keywords:
+  - LLM agents
+  - coding agents
+  - agent memory
+  - regression testing
+  - benchmark
+  - open data
