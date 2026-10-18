@@ -11,6 +11,7 @@
 \usepackage{microtype}
 \usepackage[hidelinks]{hyperref}
 \usepackage{url}
+\setlength{\emergencystretch}{3em}  % avoid overfull lines from long identifiers and paths
 
 % Every empirical number in this paper is a macro generated from the committed
 % run data by `python -m harness.paper_numbers` (see results/claims.md).
@@ -308,6 +309,7 @@ and we report Cliff's $\delta$ as the effect size.
 \begin{table}[t]
 \centering
 \small
+\setlength{\tabcolsep}{4pt}
 \begin{tabular}{lrrrrrrr}
 \toprule
 Arm & M1@T24 & per-task M1 & own verdict & H1-trap & H1-rewrite & coerced & ktok/run \\
@@ -332,6 +334,7 @@ judge tokens (input + output) per run.}
 \begin{table}[t]
 \centering
 \small
+\setlength{\tabcolsep}{4pt}
 \begin{tabular}{lccccc}
 \toprule
  & \multicolumn{4}{c}{vs.\ Arm A (Holm $p$, Cliff's $\delta$)} & KW $p$ \\
@@ -439,7 +442,7 @@ the judge refused it, so capture was \NCaptureD.
 \begin{table}[t]
 \centering
 \small
-\begin{tabular}{p{6.2cm}p{4.3cm}l}
+\begin{tabular}{p{6.0cm}p{4.3cm}l}
 \toprule
 Pre-registered prediction & Observed & Verdict \\
 \midrule
