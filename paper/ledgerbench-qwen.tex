@@ -17,9 +17,9 @@
 % run data by `python -m harness.paper_numbers` (see results/claims.md).
 \input{numbers}
 
-\title{\textbf{Executable Requirement Memory for LLM Coding Agents\\
-Under Changing Requirements: An Open-Data Study\\
-with a Local Open-Weight Model}}
+\title{\textbf{Executable Requirement Memory\\
+for LLM Coding Agents Under Changing Requirements:\\
+An Open-Data Study with a Local Open-Weight Model}}
 
 \author{Pankaj Kumar\thanks{Independent researcher.
 Correspondence: \texttt{contact@nordneuron.com}.
@@ -291,10 +291,10 @@ campaign, progress checks displayed per-run pass counts and event counts. No
 scoring rule or configuration was changed after any such check; the
 analysis ran once, automatically, after the last run.
 
-\paragraph{Isolation.} An automated leak check over every logged prompt found
-\NLeakHits{} hidden-oracle content in all \NLeakRuns{} runs, and a
-separation-of-powers scan found \NSepGovHits{} violations in all
-\NSepGovRuns{} governed runs.
+\paragraph{Isolation.} An automated leak check over every logged prompt of all
+\NLeakRuns{} runs found \NLeakHits{} occurrences of hidden-oracle content, and
+a separation-of-powers scan of all \NSepGovRuns{} governed runs found
+\NSepGovHits{} violations.
 
 \paragraph{Statistics.} Inference was out of scope in the registration, so all
 tests here are exploratory. For each per-run endpoint we report bootstrap 95\%
@@ -420,10 +420,10 @@ governed arms.
 \subsection{Governance activity}
 
 Evidence-triggered retirement worked as designed: at T6 every governed run
-retired the JSON-storage assertions (\NEOneC/\NEOneCplus/\NEOneD{} of
-\NSeedsPerArm), at T14 every governed run retired the
-schema assertion A6 (\NETwoASixC/\NETwoASixCplus/\NETwoASixD{} of
-\NSeedsPerArm{}), and the other T14-stale assertion A10 was gone by T14 in every
+retired the JSON-storage assertions (C, C+, D: \NEOneC, \NEOneCplus{} and
+\NEOneD{} of \NSeedsPerArm{} runs), at T14 every governed run retired the
+schema assertion A6 (\NETwoASixC, \NETwoASixCplus{} and \NETwoASixD{} of
+\NSeedsPerArm{} runs), and the other T14-stale assertion A10 was gone by T14 in every
 governed run, often already retired earlier through a conflict escalation. The
 admission-time conflict check was very active (\NEscalationsC, \NEscalationsCplus{}
 and \NEscalationsD{} escalations in C, C+ and D) and the judge mostly retained
@@ -442,7 +442,7 @@ the judge refused it, so capture was \NCaptureD.
 \begin{table}[t]
 \centering
 \small
-\begin{tabular}{p{6.0cm}p{4.3cm}l}
+\begin{tabular}{>{\raggedright\arraybackslash}p{5.6cm}>{\raggedright\arraybackslash}p{4.6cm}>{\raggedright\arraybackslash}p{3.2cm}}
 \toprule
 Pre-registered prediction & Observed & Verdict \\
 \midrule

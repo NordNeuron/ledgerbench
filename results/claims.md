@@ -83,9 +83,9 @@ Each number in the paper is a `\N...` macro from `paper/numbers.tex`, listed her
 | `\NTrapSecondaryB` | H1-trap violations (secondaries, exploratory), Arm B | 0 | `results/h1_events.csv` |
 | `\NRewriteSecondaryB` | H1-rewrite violations (secondaries, exploratory), Arm B | 0 | `results/h1_events.csv` |
 | `\NMOneTwentyFourC` | M1@T24 mean, Arm C | 0.465 | `results/metrics.csv (m1_cumulative @T24)` |
-| `\NMOneTwentyFourSdC` | M1@T24 SD, Arm C | 0.28 | `results/metrics.csv` |
-| `\NMOnePassC` | Per-task hidden-oracle pass rate, Arm C | 0.75 | `results/metrics.csv (m1_pass)` |
-| `\NVerdictPassC` | Arm's own verdict pass rate, Arm C | 0.5 | `results/metrics.csv (arm_verdict)` |
+| `\NMOneTwentyFourSdC` | M1@T24 SD, Arm C | 0.280 | `results/metrics.csv` |
+| `\NMOnePassC` | Per-task hidden-oracle pass rate, Arm C | 0.750 | `results/metrics.csv (m1_pass)` |
+| `\NVerdictPassC` | Arm's own verdict pass rate, Arm C | 0.500 | `results/metrics.csv (arm_verdict)` |
 | `\NRegressionsC` | M2 regressions per run (mean), Arm C | 17.2 | `results/metrics.csv (m2_regression_count)` |
 | `\NTrapC` | H1-trap violations (primaries), Arm C | 4 | `results/h1_events.csv` |
 | `\NRewriteC` | H1-rewrite violations (primaries, uncoerced), Arm C | 12 | `results/h1_events.csv` |
@@ -126,7 +126,7 @@ Each number in the paper is a `\N...` macro from `paper/numbers.tex`, listed her
 | `\NEThreeC` | Runs where E3 superseded A5 at T20, Arm C | 11 | `runs/*/supersessions.jsonl` |
 | `\NTTwentyFourEscC` | Runs escalating a conflict at T24, Arm C | 8 | `runs/*/log.jsonl` |
 | `\NPlantConflictC` | Runs superseding A11f via conflict, Arm C | 7 | `runs/*/supersessions.jsonl` |
-| `\NMOneTwentyFourCplus` | M1@T24 mean, Arm C+ | 0.42 | `results/metrics.csv (m1_cumulative @T24)` |
+| `\NMOneTwentyFourCplus` | M1@T24 mean, Arm C+ | 0.420 | `results/metrics.csv (m1_cumulative @T24)` |
 | `\NMOneTwentyFourSdCplus` | M1@T24 SD, Arm C+ | 0.386 | `results/metrics.csv` |
 | `\NMOnePassCplus` | Per-task hidden-oracle pass rate, Arm C+ | 0.743 | `results/metrics.csv (m1_pass)` |
 | `\NVerdictPassCplus` | Arm's own verdict pass rate, Arm C+ | 0.531 | `results/metrics.csv (arm_verdict)` |
@@ -257,13 +257,13 @@ Each number in the paper is a `\N...` macro from `paper/numbers.tex`, listed her
 | `\NStMOneTwentyFourCiCplus` | m1_t24: bootstrap 95% CI of mean, Arm C+ | [0.208, 0.628] | `derived (percentile bootstrap, 10k, fixed seed)` |
 | `\NStMOneTwentyFourCiD` | m1_t24: bootstrap 95% CI of mean, Arm D | [0.174, 0.521] | `derived (percentile bootstrap, 10k, fixed seed)` |
 | `\NStMOneTwentyFourBvsAPHolm` | m1_t24: B_vs_A Mann-Whitney p (Holm, family vs_A) | 0.387 | `derived (scipy.stats.mannwhitneyu + Holm)` |
-| `\NStMOneTwentyFourBvsADelta` | m1_t24: B_vs_A Cliff's delta | 0.4 | `derived` |
+| `\NStMOneTwentyFourBvsADelta` | m1_t24: B_vs_A Cliff's delta | 0.40 | `derived` |
 | `\NStMOneTwentyFourCvsAPHolm` | m1_t24: C_vs_A Mann-Whitney p (Holm, family vs_A) | 1.000 | `derived (scipy.stats.mannwhitneyu + Holm)` |
 | `\NStMOneTwentyFourCvsADelta` | m1_t24: C_vs_A Cliff's delta | 0.21 | `derived` |
 | `\NStMOneTwentyFourCplusvsAPHolm` | m1_t24: C+_vs_A Mann-Whitney p (Holm, family vs_A) | 1.000 | `derived (scipy.stats.mannwhitneyu + Holm)` |
 | `\NStMOneTwentyFourCplusvsADelta` | m1_t24: C+_vs_A Cliff's delta | 0.12 | `derived` |
 | `\NStMOneTwentyFourDvsAPHolm` | m1_t24: D_vs_A Mann-Whitney p (Holm, family vs_A) | 1.000 | `derived (scipy.stats.mannwhitneyu + Holm)` |
-| `\NStMOneTwentyFourDvsADelta` | m1_t24: D_vs_A Cliff's delta | 0 | `derived` |
+| `\NStMOneTwentyFourDvsADelta` | m1_t24: D_vs_A Cliff's delta | 0.00 | `derived` |
 | `\NStMOneTwentyFourBvsCPHolm` | m1_t24: B_vs_C Mann-Whitney p (Holm, family among_ledgered) | 1.000 | `derived (scipy.stats.mannwhitneyu + Holm)` |
 | `\NStMOneTwentyFourBvsCDelta` | m1_t24: B_vs_C Cliff's delta | 0.19 | `derived` |
 | `\NStMOneTwentyFourBvsCplusPHolm` | m1_t24: B_vs_C+ Mann-Whitney p (Holm, family among_ledgered) | 1.000 | `derived (scipy.stats.mannwhitneyu + Holm)` |
@@ -283,7 +283,7 @@ Each number in the paper is a `\N...` macro from `paper/numbers.tex`, listed her
 | `\NStMOnePassCiCplus` | m1_pass_rate: bootstrap 95% CI of mean, Arm C+ | [0.701, 0.785] | `derived (percentile bootstrap, 10k, fixed seed)` |
 | `\NStMOnePassCiD` | m1_pass_rate: bootstrap 95% CI of mean, Arm D | [0.649, 0.753] | `derived (percentile bootstrap, 10k, fixed seed)` |
 | `\NStMOnePassBvsAPHolm` | m1_pass_rate: B_vs_A Mann-Whitney p (Holm, family vs_A) | 0.024 | `derived (scipy.stats.mannwhitneyu + Holm)` |
-| `\NStMOnePassBvsADelta` | m1_pass_rate: B_vs_A Cliff's delta | 0.6 | `derived` |
+| `\NStMOnePassBvsADelta` | m1_pass_rate: B_vs_A Cliff's delta | 0.60 | `derived` |
 | `\NStMOnePassCvsAPHolm` | m1_pass_rate: C_vs_A Mann-Whitney p (Holm, family vs_A) | 0.010 | `derived (scipy.stats.mannwhitneyu + Holm)` |
 | `\NStMOnePassCvsADelta` | m1_pass_rate: C_vs_A Cliff's delta | 0.73 | `derived` |
 | `\NStMOnePassCplusvsAPHolm` | m1_pass_rate: C+_vs_A Mann-Whitney p (Holm, family vs_A) | 0.010 | `derived (scipy.stats.mannwhitneyu + Holm)` |
@@ -297,7 +297,7 @@ Each number in the paper is a `\N...` macro from `paper/numbers.tex`, listed her
 | `\NStMOnePassBvsDPHolm` | m1_pass_rate: B_vs_D Mann-Whitney p (Holm, family among_ledgered) | 1.000 | `derived (scipy.stats.mannwhitneyu + Holm)` |
 | `\NStMOnePassBvsDDelta` | m1_pass_rate: B_vs_D Cliff's delta | 0.22 | `derived` |
 | `\NStMOnePassCvsCplusPHolm` | m1_pass_rate: C_vs_C+ Mann-Whitney p (Holm, family among_ledgered) | 1.000 | `derived (scipy.stats.mannwhitneyu + Holm)` |
-| `\NStMOnePassCvsCplusDelta` | m1_pass_rate: C_vs_C+ Cliff's delta | 0 | `derived` |
+| `\NStMOnePassCvsCplusDelta` | m1_pass_rate: C_vs_C+ Cliff's delta | 0.00 | `derived` |
 | `\NStMOnePassCvsDPHolm` | m1_pass_rate: C_vs_D Mann-Whitney p (Holm, family among_ledgered) | 0.506 | `derived (scipy.stats.mannwhitneyu + Holm)` |
 | `\NStMOnePassCvsDDelta` | m1_pass_rate: C_vs_D Cliff's delta | 0.42 | `derived` |
 | `\NStMOnePassCplusvsDPHolm` | m1_pass_rate: C+_vs_D Mann-Whitney p (Holm, family among_ledgered) | 0.899 | `derived (scipy.stats.mannwhitneyu + Holm)` |
@@ -325,7 +325,7 @@ Each number in the paper is a `\N...` macro from `paper/numbers.tex`, listed her
 | `\NStRegressionsCvsCplusPHolm` | regressions: C_vs_C+ Mann-Whitney p (Holm, family among_ledgered) | 1.000 | `derived (scipy.stats.mannwhitneyu + Holm)` |
 | `\NStRegressionsCvsCplusDelta` | regressions: C_vs_C+ Cliff's delta | -0.26 | `derived` |
 | `\NStRegressionsCvsDPHolm` | regressions: C_vs_D Mann-Whitney p (Holm, family among_ledgered) | 1.000 | `derived (scipy.stats.mannwhitneyu + Holm)` |
-| `\NStRegressionsCvsDDelta` | regressions: C_vs_D Cliff's delta | -0.3 | `derived` |
+| `\NStRegressionsCvsDDelta` | regressions: C_vs_D Cliff's delta | -0.30 | `derived` |
 | `\NStRegressionsCplusvsDPHolm` | regressions: C+_vs_D Mann-Whitney p (Holm, family among_ledgered) | 1.000 | `derived (scipy.stats.mannwhitneyu + Holm)` |
 | `\NStRegressionsCplusvsDDelta` | regressions: C+_vs_D Cliff's delta | -0.17 | `derived` |
 | `\NStHOneKwP` | h1_trap_rewrite: Kruskal-Wallis p across 5 arms | <0.001 | `derived (scipy.stats.kruskal)` |
@@ -335,7 +335,7 @@ Each number in the paper is a `\N...` macro from `paper/numbers.tex`, listed her
 | `\NStHOneCiCplus` | h1_trap_rewrite: bootstrap 95% CI of mean, Arm C+ | [1.25, 2.67] | `derived (percentile bootstrap, 10k, fixed seed)` |
 | `\NStHOneCiD` | h1_trap_rewrite: bootstrap 95% CI of mean, Arm D | [0.833, 2.08] | `derived (percentile bootstrap, 10k, fixed seed)` |
 | `\NStHOneBvsAPHolm` | h1_trap_rewrite: B_vs_A Mann-Whitney p (Holm, family vs_A) | <0.001 | `derived (scipy.stats.mannwhitneyu + Holm)` |
-| `\NStHOneBvsADelta` | h1_trap_rewrite: B_vs_A Cliff's delta | -1 | `derived` |
+| `\NStHOneBvsADelta` | h1_trap_rewrite: B_vs_A Cliff's delta | -1.00 | `derived` |
 | `\NStHOneCvsAPHolm` | h1_trap_rewrite: C_vs_A Mann-Whitney p (Holm, family vs_A) | 0.002 | `derived (scipy.stats.mannwhitneyu + Holm)` |
 | `\NStHOneCvsADelta` | h1_trap_rewrite: C_vs_A Cliff's delta | -0.83 | `derived` |
 | `\NStHOneCplusvsAPHolm` | h1_trap_rewrite: C+_vs_A Mann-Whitney p (Holm, family vs_A) | 0.003 | `derived (scipy.stats.mannwhitneyu + Holm)` |
@@ -387,23 +387,23 @@ Each number in the paper is a `\N...` macro from `paper/numbers.tex`, listed her
 | `\NStKtokCiCplus` | ktok: bootstrap 95% CI of mean, Arm C+ | [1300, 1506] | `derived (percentile bootstrap, 10k, fixed seed)` |
 | `\NStKtokCiD` | ktok: bootstrap 95% CI of mean, Arm D | [1368, 1585] | `derived (percentile bootstrap, 10k, fixed seed)` |
 | `\NStKtokBvsAPHolm` | ktok: B_vs_A Mann-Whitney p (Holm, family vs_A) | <0.001 | `derived (scipy.stats.mannwhitneyu + Holm)` |
-| `\NStKtokBvsADelta` | ktok: B_vs_A Cliff's delta | 1 | `derived` |
+| `\NStKtokBvsADelta` | ktok: B_vs_A Cliff's delta | 1.00 | `derived` |
 | `\NStKtokCvsAPHolm` | ktok: C_vs_A Mann-Whitney p (Holm, family vs_A) | 0.001 | `derived (scipy.stats.mannwhitneyu + Holm)` |
 | `\NStKtokCvsADelta` | ktok: C_vs_A Cliff's delta | 0.79 | `derived` |
 | `\NStKtokCplusvsAPHolm` | ktok: C+_vs_A Mann-Whitney p (Holm, family vs_A) | <0.001 | `derived (scipy.stats.mannwhitneyu + Holm)` |
 | `\NStKtokCplusvsADelta` | ktok: C+_vs_A Cliff's delta | 0.85 | `derived` |
 | `\NStKtokDvsAPHolm` | ktok: D_vs_A Mann-Whitney p (Holm, family vs_A) | <0.001 | `derived (scipy.stats.mannwhitneyu + Holm)` |
-| `\NStKtokDvsADelta` | ktok: D_vs_A Cliff's delta | 0.9 | `derived` |
+| `\NStKtokDvsADelta` | ktok: D_vs_A Cliff's delta | 0.90 | `derived` |
 | `\NStKtokBvsCPHolm` | ktok: B_vs_C Mann-Whitney p (Holm, family among_ledgered) | <0.001 | `derived (scipy.stats.mannwhitneyu + Holm)` |
-| `\NStKtokBvsCDelta` | ktok: B_vs_C Cliff's delta | 1 | `derived` |
+| `\NStKtokBvsCDelta` | ktok: B_vs_C Cliff's delta | 1.00 | `derived` |
 | `\NStKtokBvsCplusPHolm` | ktok: B_vs_C+ Mann-Whitney p (Holm, family among_ledgered) | <0.001 | `derived (scipy.stats.mannwhitneyu + Holm)` |
-| `\NStKtokBvsCplusDelta` | ktok: B_vs_C+ Cliff's delta | 1 | `derived` |
+| `\NStKtokBvsCplusDelta` | ktok: B_vs_C+ Cliff's delta | 1.00 | `derived` |
 | `\NStKtokBvsDPHolm` | ktok: B_vs_D Mann-Whitney p (Holm, family among_ledgered) | <0.001 | `derived (scipy.stats.mannwhitneyu + Holm)` |
-| `\NStKtokBvsDDelta` | ktok: B_vs_D Cliff's delta | 1 | `derived` |
+| `\NStKtokBvsDDelta` | ktok: B_vs_D Cliff's delta | 1.00 | `derived` |
 | `\NStKtokCvsCplusPHolm` | ktok: C_vs_C+ Mann-Whitney p (Holm, family among_ledgered) | 1.000 | `derived (scipy.stats.mannwhitneyu + Holm)` |
 | `\NStKtokCvsCplusDelta` | ktok: C_vs_C+ Cliff's delta | 0.06 | `derived` |
 | `\NStKtokCvsDPHolm` | ktok: C_vs_D Mann-Whitney p (Holm, family among_ledgered) | 1.000 | `derived (scipy.stats.mannwhitneyu + Holm)` |
-| `\NStKtokCvsDDelta` | ktok: C_vs_D Cliff's delta | -0.1 | `derived` |
+| `\NStKtokCvsDDelta` | ktok: C_vs_D Cliff's delta | -0.10 | `derived` |
 | `\NStKtokCplusvsDPHolm` | ktok: C+_vs_D Mann-Whitney p (Holm, family among_ledgered) | 1.000 | `derived (scipy.stats.mannwhitneyu + Holm)` |
 | `\NStKtokCplusvsDDelta` | ktok: C+_vs_D Cliff's delta | -0.18 | `derived` |
 | `\NSensHOneTrapB` | Sensitivity h1_trap_B incl. coerced: count 9 vs threshold 4.00 | REFUTED | `derived (not pre-registered)` |
